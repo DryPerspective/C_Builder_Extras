@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/C++Builder Extras/Main.cpp
+*.sln
+/C++Builder Extras/C++Builder Extras.vcxproj
+/C++Builder Extras/C++Builder Extras.vcxproj.filters
