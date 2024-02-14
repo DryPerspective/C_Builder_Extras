@@ -94,14 +94,12 @@ namespace dp {
 		};
 #endif
 
-		//Our "violation handler" typedef
-		typedef void(*handler_t)(const violation&);
-
 		inline dp::compat::string default_message(const violation& in) {
 			return dp::compat::string("Contract ") + to_string(in.kind()) + " violation in function " + in.function() + ": " + in.message();
 		}
 
-
+		//Our "violation handler" typedef
+		typedef void(*handler_t)(const violation&);
 
 		inline handler_t get_handler() DP_NOEXCEPT;
 		inline policy get_policy() DP_NOEXCEPT;
@@ -123,6 +121,8 @@ namespace dp {
 
 		namespace detail {
 			//I *hate* this ugly hack but without inline variables it's where we are.
+			//We know that both of these functions will always be called before a violation
+			//is created so there's no chance of awkward sequencing issues.
 			inline handler_t& current_handler() DP_NOEXCEPT {
 				static handler_t current_handler = default_handler;
 				return current_handler;
@@ -186,19 +186,20 @@ namespace dp {
 #define GLUE(x, y) x y
 #define RETURN_ARG_COUNT(_1_, _2_, _3_, count, ...) count
 #define EXPAND_ARGS(args) RETURN_ARG_COUNT args
-#define COUNT_ARGS_MAX(...) EXPAND_ARGS((__VA_ARGS__, 3, 2, 1, 0))
+#define NUM_ARGS(...) EXPAND_ARGS((__VA_ARGS__, 3, 2, 1, 0))
 #define OVERLOAD_MACRO2(name, count) name##count
 #define OVERLOAD_MACRO1(name, count) OVERLOAD_MACRO2(name, count)
 #define OVERLOAD_MACRO(name, count) OVERLOAD_MACRO1(name, count)
-#define CALL_OVERLOAD(name, ...) GLUE(OVERLOAD_MACRO(name, COUNT_ARGS_MAX(__VA_ARGS__)), (__VA_ARGS__))
+#define CALL_OVERLOAD(name, ...) GLUE(OVERLOAD_MACRO(name, NUM_ARGS(__VA_ARGS__)), (__VA_ARGS__))
 
 #define CONTRACT_ASSERT(...) CALL_OVERLOAD(CONTRACT_ASSERT, __VA_ARGS__)
 #define PRE(...) CALL_OVERLOAD(PRE, __VA_ARGS__)
 #define POST(...) CALL_OVERLOAD(POST, __VA_ARGS__)
 
-#elif defined(DP_CBUILDER10) || __cplusplus >= 201103L //But other compilers do not
-#define NUM_ARGS_(_1, _2, _3, _4, _5, _6, TOTAL, ...) TOTAL
-#define NUM_ARGS(...) NUM_ARGS_(__VA_ARGS__, 6, 5, 4, 3, 2, 1)
+#elif defined(DP_CBUILDER10) || __cplusplus >= 201103L 
+//But other compilers do not
+#define NUM_ARGS_IMPL(_1, _2, _3, _4, _5, _6, TOTAL, ...) TOTAL
+#define NUM_ARGS(...) NUM_ARGS_IMPL(__VA_ARGS__, 6, 5, 4, 3, 2, 1)
 #define CONCAT_IMPL(X, Y) X##Y  
 #define CONCAT(MACRO, NUMBER) CONCAT_IMPL(MACRO, NUMBER)
 #define CALL_OVERLOAD(MACRO, ...) CONCAT(MACRO, NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
