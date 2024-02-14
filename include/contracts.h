@@ -38,8 +38,10 @@ namespace dp {
 				return "precondition";
 			case postcondition:
 				return "postcondition";
+			case assertion:
+				return "assertion";	
 			default:
-				return "assertion";			
+				return "[Unknown Type]";
 			}
 		}
 
