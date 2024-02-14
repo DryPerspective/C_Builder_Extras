@@ -365,3 +365,7 @@ FodyWeavers.xsd
 *.sln
 /C++Builder Extras/C++Builder Extras.vcxproj
 /C++Builder Extras/C++Builder Extras.vcxproj.filters
+/C++ Builder Extras.vcxproj
+/C++ Builder Extras.vcxproj.filters
+/CppProperties.json
+/Main.cpp
