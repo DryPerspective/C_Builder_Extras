@@ -137,15 +137,20 @@ namespace dp {
 		}
 
 
-		inline void set_handler(handler_t in) DP_NOEXCEPT {
+		inline handler_t set_handler(handler_t in) DP_NOEXCEPT {
+			handler_t prev = detail::current_handler();
 			detail::current_handler() = in;
+			return prev;
+
 		}
 		inline handler_t get_handler() DP_NOEXCEPT {
 			return detail::current_handler();
 		}
 
-		inline void set_policy(policy in) DP_NOEXCEPT {
+		inline policy set_policy(policy in) DP_NOEXCEPT {
+			policy prev = detail::current_policy();
 			detail::current_policy() = in;
+			return prev;
 		}
 		inline policy get_policy() DP_NOEXCEPT {
 			return detail::current_policy();
@@ -169,16 +174,16 @@ namespace dp {
 #endif
 
 //We allow 3 "overloads" of the contract annotations - condition, label, and single-use handler.
-#define CONTRACT_ASSERT1(cond)						if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) dp::contract::get_handler()(dp::contract::violation(dp::contract::assertion, DP_FUNC, #cond));
-#define CONTRACT_ASSERT2(cond, message)				if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) dp::contract::get_handler()(dp::contract::violation(dp::contract::assertion, DP_FUNC, message));
+#define CONTRACT_ASSERT1(cond)						if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(dp::contract::violation(dp::contract::assertion, DP_FUNC, #cond));
+#define CONTRACT_ASSERT2(cond, message)				if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(dp::contract::violation(dp::contract::assertion, DP_FUNC, message));
 #define CONTRACT_ASSERT3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::assertion, DP_FUNC, message));
 
-#define PRE1(cond)						if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) dp::contract::get_handler()(dp::contract::violation(dp::contract::precondition, DP_FUNC, #cond));
-#define PRE2(cond, message)				if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) dp::contract::get_handler()(dp::contract::violation(dp::contract::precondition, DP_FUNC, message));
+#define PRE1(cond)						if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(dp::contract::violation(dp::contract::precondition, DP_FUNC, #cond));
+#define PRE2(cond, message)				if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(dp::contract::violation(dp::contract::precondition, DP_FUNC, message));
 #define PRE3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::precondition, DP_FUNC, message));
 
-#define POST1(cond)						if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) dp::contract::get_handler()(dp::contract::violation(dp::contract::postcondition, DP_FUNC, #cond));
-#define POST2(cond, message)			if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) dp::contract::get_handler()(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message));
+#define POST1(cond)						if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(dp::contract::violation(dp::contract::postcondition, DP_FUNC, #cond));
+#define POST2(cond, message)			if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message));
 #define POST3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message));
 
 
