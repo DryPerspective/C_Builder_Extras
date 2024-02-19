@@ -86,24 +86,13 @@ namespace dp {
 #define DEFER_COUNT __LINE__
 #endif
 
-/*
-*   std::uncaught_exception is a tricky beast.
-*   It was deprecated in C++17 and replaced in C++20 with std::uncaught_exceptions
-*   However, MSVC is quite ansy about using it at all even in the standards where it is valid.
-*/
-#if defined(_MSC_VER) || __cplusplus >= 202002L
-#define DP_UNCAUGHT_EXCEPTION std::uncaught_exceptions()
-#else
-#define DP_UNCAUGHT_EXCEPTION std::uncaught_exception()
-#endif
-
 #define DEFER(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]() mutable noexcept(false) {ARGS ;});
 #define SCOPE_EXIT(ARGS) DEFER(ARGS)
-#define SCOPE_SUCCESS(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]()mutable noexcept(false){ if(! DP_UNCAUGHT_EXCEPTION){ \
+#define SCOPE_SUCCESS(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]()mutable noexcept(false){ if(! std::uncaught_exceptions()){ \
                                                                                                                                             ARGS ; \
                                                                                                                                            }});
 
-#define SCOPE_FAIL(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]()mutable noexcept(false){ if(DP_UNCAUGHT_EXCEPTION){ \
+#define SCOPE_FAIL(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]()mutable noexcept(false){ if(std::uncaught_exceptions()){ \
                                                                                                                                             ARGS ; \
                                                                                                                                            }});
 
