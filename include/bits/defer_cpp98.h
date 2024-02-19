@@ -23,4 +23,7 @@
                     } DEFER_CONCAT_MACRO(Defer_Struct, DEFER_CONCAT_COUNT);
 
 
+#define SCOPE_EXIT(ARGS) DEFER(ARGS)
+
+
 #endif
