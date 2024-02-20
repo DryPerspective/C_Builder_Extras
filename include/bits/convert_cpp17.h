@@ -311,11 +311,13 @@ namespace dp {
 				return in;
 			}
 			//Integer types
-			static inline T get(T in, tag_any_int) {
+			template<typename IntT>
+			static inline T get(IntT in, tag_any_int) {
 				return Currency{ static_cast<int>(in) };
 			}
 			//Floating point
-			static inline T get(T in, tag_floating_point) {
+			template<typename FloatT>
+			static inline T get(FloatT in, tag_floating_point) {
 				return Currency{ static_cast<double>(in) };
 			}
 			//String types
