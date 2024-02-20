@@ -113,22 +113,23 @@ namespace contract {
 	*	If we have an exception active, then this is bad.
 	*	As such the default handler will not throw an additional exception if there is already an active current one.
 	*	We need another macro to ensure we call the right function
+	*	Borland don't define the versioning macros
 	*/
-#if defined(DP_CBUILDER11) || _MSVC_LANG >= 201703L || __cplusplus >= 201703L
+#if defined(DP_CBUILDER11) || __cpp_lib_uncaught_exceptions
 #define DP_UNCAUGHT_EXCEPTION std::uncaught_exceptions()
 #else
 #define DP_UNCAUGHT_EXCEPTION std::uncaught_exception()
 #endif
 
-	namespace detail {
-		void default_observe_behaviour(const violation& in) {
-			//Not the most elegant solution but without any language support we need *some* kind of observe-and-continue metric
-			std::ofstream out("Contract_Violations.log", std::ios_base::out | std::ios_base::app);
-			//c_str because AnsiString operator<< cannot be guaranteed to be available.
-			out << default_message(in).c_str() << '\n';
-			return;
-		}
+
+	void default_observe(const violation& in) {
+		//Not the most elegant solution but without any language support we need *some* kind of observe-and-continue metric
+		std::ofstream out("Contract_Violations.log", std::ios_base::out | std::ios_base::app);
+		//c_str because AnsiString operator<< cannot be guaranteed to be available.
+		out << default_message(in).c_str() << '\n';
+		return;
 	}
+	
 
 	inline void default_handler(const violation& in) {
 		policy current_policy = get_policy();
@@ -138,7 +139,7 @@ namespace contract {
 #ifdef DP_CBUILDER5
 				ShowMessage("Contract violation occurred during active exception: " + default_message(in));
 #else
-				detail::default_observe_behaviour(in);
+				default_observe(in);
 #endif
 			}
 			else {
@@ -146,7 +147,7 @@ namespace contract {
 			}
 		}
 		else {
-			detail::default_observe_behaviour(in);
+			default_observe(in);
 		}
 	}
 

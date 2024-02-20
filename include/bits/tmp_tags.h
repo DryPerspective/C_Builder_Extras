@@ -6,8 +6,6 @@
 *  Note that this header is intended to be used in several environments and across several C++ standards so there's some preprocessor hackery going on
 */
 
-
-
 #include <string>
 #include <climits>
 

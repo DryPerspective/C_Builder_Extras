@@ -2,7 +2,7 @@
 #define DP_CPP98_SUPPORT_TOOLS
 
 //Rather than reinvent the type_traits wheel in every header that requires it
-//Or add my cpp98 lib as a hard requirement, we provide a quick example of what we need.
+//or add my cpp98 lib as a hard requirement; we provide a quick example of what we need.
 namespace dp {
 
     namespace support {
