@@ -10,7 +10,7 @@
 #include <climits>
 
 #ifdef __BORLANDC__
-#include "BorlandVersionDefs.h"
+#include "bits/borland_version_defs.h"
 #endif
 
 //If C++11. MSVC define __cplusplus to its 1998 value by default, and Borland define it to 1 because Borland are special snowflakes

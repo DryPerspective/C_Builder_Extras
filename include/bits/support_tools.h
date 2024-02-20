@@ -96,6 +96,43 @@ namespace dp {
         }
         template<typename T>
         struct is_signed : detail::is_signed<T>::type {};
+
+
+
+        template<typename T>
+        struct is_array : dp::support::false_type {};
+        template<typename T>
+        struct is_array<T[]> : dp::support::true_type {};
+
+        template<typename T>
+        struct remove_extent {
+            typedef T type;
+        };
+        template<typename T>
+        struct remove_extent<T[]> {
+            typedef T type;
+        };
+
+        template<typename T>
+        struct add_pointer {
+            typedef T* type;
+        };
+
+        //Array decay which provides a type in the false case
+        namespace detail {
+            template<typename T, bool = dp::support::is_array<T>::value>
+            struct decay_if_array {
+                typedef typename dp::support::remove_extent<T>::type removed;
+                typedef typename dp::support::add_pointer<removed>::type type;
+            };
+            template<typename T>
+            struct decay_if_array<T, false> {
+                typedef T type;
+            };
+        }
+
+        template<typename T>
+        struct decay_if_array : detail::decay_if_array<T> {};
     }
 
 }

@@ -14,9 +14,9 @@
 #include <climits>
 #include <sstream>
 
-#include "support_tools.h"
-#include "borland_version_defs.h"
-#include "tmp_tags.h"
+#include "bits/support_tools.h"
+#include "bits/borland_version_defs.h"
+#include "bits/tmp_tags.h"
 
 /*
 *	The template engine on the Borland C++Builder compiler is weak and noncompliant.
