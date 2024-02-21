@@ -11,6 +11,8 @@
 #include <tuple>
 #include <exception>
 
+#include "bits/macros.h"
+
 namespace dp {
 
     template<typename Callable, typename... Args>
@@ -71,28 +73,15 @@ namespace dp {
     defer(T) -> defer<T>;
 }
 
-/*
-*   In the macro case, we want to be able to generate implicit Defer instances with unique names.
-*   As such we use __COUNTER__ if it's a available and __LINE__ if not, and concat each one such that
-*   the macro generates classes called Defer_Struct1, Defer_Struct2, Defer_Struct3. Unique but still
-*   understandable and diagnosable if needed.
-*/
-#define DEFER_CONCAT_IMPL(x,y) x##y
-#define DEFER_CONCAT_MACRO( x, y ) DEFER_CONCAT_IMPL( x, y )
 
-#ifdef __COUNTER__
-#define DEFER_COUNT __COUNTER__
-#else
-#define DEFER_COUNT __LINE__
-#endif
 
-#define DEFER(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]() mutable noexcept(false) {ARGS ;});
+#define DEFER(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]() mutable noexcept(false) {ARGS ;});
 #define SCOPE_EXIT(ARGS) DEFER(ARGS)
-#define SCOPE_SUCCESS(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]()mutable noexcept(false){ if(! std::uncaught_exceptions()){ \
+#define SCOPE_SUCCESS(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]()mutable noexcept(false){ if(! std::uncaught_exceptions()){ \
                                                                                                                                             ARGS ; \
                                                                                                                                            }});
 
-#define SCOPE_FAIL(ARGS) [[maybe_unused]] auto DEFER_CONCAT_MACRO(Defer_Struct, DEFER_COUNT) = dp::defer([&]()mutable noexcept(false){ if(std::uncaught_exceptions()){ \
+#define SCOPE_FAIL(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]()mutable noexcept(false){ if(std::uncaught_exceptions()){ \
                                                                                                                                             ARGS ; \
                                                                                                                                            }});
 

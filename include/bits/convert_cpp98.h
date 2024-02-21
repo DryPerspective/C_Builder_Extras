@@ -5,11 +5,6 @@
 #error "Using multiple versions of the convert_to header is not supported";
 #endif
 
-
-
-
-
-
 #include <string>
 #include <cstdlib>
 #include <climits>

@@ -5,6 +5,8 @@
 #include <fstream>
 #include <exception>
 
+#include "bits/macros.h"
+
 #include "bits/borland_compat_typedefs.h"
 #ifdef __BORLANDC__
 #include "bits/borland_version_defs.h"
@@ -194,18 +196,6 @@ namespace contract {
 /*
 *	And now we move on to the ugly preprocessor magic which makes it all work.
 */
-
-//Try to get a cross platform call to __FUNCTION__
-#ifdef __BORLANDC__
-#define DP_FUNC __FUNC__
-#elif defined (_MSC_VER)
-#define DP_FUNC __func__
-#elif defined(__GNUC__)
-#define DP_FUNC __FUNCTION__
-#else
-#error "No function handle found"
-#endif
-
 //We allow 3 "overloads" of the contract annotations - condition, label, and single-use handler.
 #define CONTRACT_ASSERT3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::assertion, DP_FUNC, message))
 #define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
@@ -229,38 +219,17 @@ namespace contract {
 
 
 
-//In C++11 and up (and in C++Builder10 for some reason) we have __VA_ARGS__ to "overload" macros
-//MSVC has a bug in expanding variadic macros
-#ifdef _MSC_VER
-#define GLUE(x, y) x y
-#define RETURN_ARG_COUNT(_1_, _2_, _3_, count, ...) count
-#define EXPAND_ARGS(args) RETURN_ARG_COUNT args
-#define NUM_ARGS(...) EXPAND_ARGS((__VA_ARGS__, 3, 2, 1, 0))
-#define OVERLOAD_MACRO2(name, count) name##count
-#define OVERLOAD_MACRO1(name, count) OVERLOAD_MACRO2(name, count)
-#define OVERLOAD_MACRO(name, count) OVERLOAD_MACRO1(name, count)
-#define CALL_OVERLOAD(name, ...) GLUE(OVERLOAD_MACRO(name, NUM_ARGS(__VA_ARGS__)), (__VA_ARGS__))
 
-#define CONTRACT_ASSERT(...) CALL_OVERLOAD(CONTRACT_ASSERT, __VA_ARGS__)
-#define PRE(...) CALL_OVERLOAD(PRE, __VA_ARGS__)
-#define POST(...) CALL_OVERLOAD(POST, __VA_ARGS__)
-
-#elif defined(DP_CBUILDER10) || __cplusplus >= 201103L 
-//But other compilers do not
-#define NUM_ARGS_IMPL(_1, _2, _3, _4, _5, _6, TOTAL, ...) TOTAL
-#define NUM_ARGS(...) NUM_ARGS_IMPL(__VA_ARGS__, 6, 5, 4, 3, 2, 1)
-#define CONCAT_IMPL(X, Y) X##Y  
-#define CONCAT(MACRO, NUMBER) CONCAT_IMPL(MACRO, NUMBER)
-#define CALL_OVERLOAD(MACRO, ...) CONCAT(MACRO, NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
-
-#define CONTRACT_ASSERT( ... ) CALL_OVERLOAD(CONTRACT_ASSERT, __VA_ARGS__)
-#define PRE(...) CALL_OVERLOAD(PRE, __VA_ARGS__)
-#define POST(...) CALL_OVERLOAD(POST, __VA_ARGS__)
+//We can "overload" our macros to call a selected one based on the number of args
+#if defined(DP_CBUILDER10) || __cplusplus >= 201103L || defined(_MSC_VER)
+#define CONTRACT_ASSERT( ... )	DP_MACRO_OVERLOAD(CONTRACT_ASSERT, __VA_ARGS__)
+#define PRE(...)				DP_MACRO_OVERLOAD(PRE, __VA_ARGS__)
+#define POST(...)				DP_MACRO_OVERLOAD(POST, __VA_ARGS__)
 #else
 //And we're on a C++98 compiler we can't overload anyway
-#define CONTRACT_ASSERT(cond) CONTRACT_ASSERT1(cond)
-#define PRE(cond) PRE1(cond)
-#define POST(cond) POST1(cond)
+#define CONTRACT_ASSERT(cond)	CONTRACT_ASSERT1(cond)
+#define	PRE(cond)				PRE1(cond)
+#define	POST(cond)				POST1(cond)
 #endif
 
 
