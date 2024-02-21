@@ -7,7 +7,7 @@ To use, add the include directory to your compiler's include path. The tools in 
 
 ## List of Features
 
-A wiki is provided with a full writeup of each feature. A short summary of the included features are:
+A [wiki](https://github.com/DryPerspective/C_Builder_Extras/wiki) is provided with a full writeup of each feature. A short summary of the included features are:
 
 * Contracts - Function contract annotations designed following a similar pattern to the current proposed contract MVP for C++26 (P2900)
 * Convert - A generic type conversion function which converts between built-in, standard library, and VCL types.

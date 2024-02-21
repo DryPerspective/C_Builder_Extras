@@ -34,7 +34,7 @@
 #define DP_MACRO_OVERLOAD_IMPL1(name, count) DP_MACRO_OVERLOAD_IMPL2(name, count)
 #define DP_MACRO_OVERLOAD_IMPL(name, count) DP_MACRO_OVERLOAD_IMPL1(name, count)
 #define DP_MACRO_OVERLOAD(name, ...) DP_GLUE(DP_MACRO_OVERLOAD_IMPL(name, DP_NUM_ARGS(__VA_ARGS__)), (__VA_ARGS__))
-#else
+#elif defined(DP_CBUILDER10) || __cplusplus >= 201103L
 //But other compilers do not
 #define DP_NUM_ARGS_IMPL(_1, _2, _3, _4, _5, _6, count, ...) count
 #define DP_NUM_ARGS(...) DP_NUM_ARGS_IMPL(__VA_ARGS__, 6, 5, 4, 3, 2, 1)
