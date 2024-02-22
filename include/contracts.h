@@ -237,17 +237,14 @@ namespace contract {
 //And we're on a C++98 compiler we can't overload anyway
 //Believe it or not, with the limitations on DEFER in C++98, it's easier to spin a new version just for deferred postconditions.
 #define DP_DEFER_POST_STRUCT(cond, violation_name) struct DP_CONCAT(struct_, violation_name){ \
-														struct impl{ \
 														dp::contract::violation m_viol; \
-														impl(const dp::contract::violation& in) : m_viol(in) {} \
-														~impl(){ \
-															if(dp::contract::get_policy() != dp::contract::ignore && ! (cond)){ \
-																(dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(m_viol); \
+														DP_CONCAT(struct_, violation_name)(const dp::contract::violation& in) : m_viol(in) {} \
+														~DP_CONCAT(struct_, violation_name)() { \
+															if (dp::contract::get_policy() != dp::contract::ignore && !(cond)) {   \
+																	(dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(m_viol); \
 															} \
 														} \
-													} m_impl; \
-													DP_CONCAT(struct_, violation_name)(const dp::contract::violation& in) : m_impl(in) {} \
-												} DP_CONCAT(instance_, violation_name)(violation_name); 
+													} DP_CONCAT(instance_, violation_name)(violation_name); 
 
 #define CONTRACT_ASSERT(cond)	CONTRACT_ASSERT1(cond)
 #define	PRE(cond)				PRE1(cond)
