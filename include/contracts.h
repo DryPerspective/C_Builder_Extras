@@ -20,8 +20,11 @@
 #define DP_NOEXCEPT
 #endif
 
-
-
+#if defined(DB_CBUILDER11) || __cplusplus >= 201103L || defined(_MSC_VER)
+#define DP_NORETURN [[noreturn]]
+#else
+#define DP_NORETURN
+#endif
 /*
 *	A contracts interface, allowing for standard error handling which encapsulates the nature of an error.
 *	We borrow from the current P2900 design a little.
@@ -126,12 +129,16 @@ namespace contract {
 #endif
 
 
-	void default_observe(const violation& in) {
+	inline void default_observe(const violation& in) {
 		//Not the most elegant solution but without any language support we need *some* kind of observe-and-continue metric
 		std::ofstream out("Contract_Violations.log", std::ios_base::out | std::ios_base::app);
 		//c_str because AnsiString operator<< cannot be guaranteed to be available.
 		out << default_message(in).c_str() << '\n';
 		return;
+	}
+
+	DP_NORETURN inline void default_enforce(const violation& in) {
+		throw violation_exception(default_message(in));
 	}
 	
 
@@ -147,9 +154,10 @@ namespace contract {
 #endif
 			}
 			else {
-				throw violation_exception(default_message(in));
+				default_enforce(in);
 			}
 		}
+		//If observe
 		else {
 			default_observe(in);
 		}
