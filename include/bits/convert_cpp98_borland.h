@@ -60,6 +60,12 @@ namespace dp {
 			return static_cast<To>(in);
 		}
 
+		//INT TO BOOL
+		template<typename To, typename From>
+		typename dp::support::enable_if<dp::support::is_same<To, bool>::value, To>::type fun(From in, tag_any_int) {
+			return in == 0 ? false : true;
+		}
+
 		//INT TO STD::STRING
 		template<typename To, typename From>
 		typename dp::support::enable_if<dp::support::is_same<To, std::string>::value, To>::type fun(From in, tag_any_int) {
@@ -101,6 +107,12 @@ namespace dp {
 			return static_cast<To>(in);
 		}
 
+		//FLOAT TO BOOL
+		template<typename To, typename From>
+		typename dp::support::enable_if<dp::support::is_same<To, bool>::value, To>::type fun(From in, tag_floating_point) {
+			return in == 0 ? false : true;
+		}
+
 		//FLOAT TO STD::STRING
 		template<typename To, typename From>
 		typename dp::support::enable_if<dp::support::is_same<To, std::string>::value, To>::type fun(From in, tag_floating_point) {
@@ -119,6 +131,18 @@ namespace dp {
 		template<typename To, typename From>
 		typename dp::support::enable_if<dp::support::is_same<To, Currency>::value, To>::type fun(From in, tag_floating_point) {
 			return Currency(static_cast<int>(in));
+		}
+
+		//BOOL TO NARROW STRING
+		template<typename To, typename From>
+		typename dp::support::enable_if<dp::support::is_same<To, std::string>::value || dp::support::is_same<To, AnsiString>::value, To>::type fun(From in, instance_of<bool>) {
+			return in ? "true" : "false";
+		}
+
+		//BOOL TO WIDE STRING
+		template<typename To, typename From>
+		typename dp::support::enable_if<dp::support::is_same<To, std::wstring>::value || dp::support::is_same<To, UnicodeString>::value, To>::type fun(From in, instance_of<bool>) {
+			return in ? L"true" : L"false";
 		}
 
 

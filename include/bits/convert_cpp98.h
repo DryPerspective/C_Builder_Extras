@@ -46,6 +46,10 @@ namespace dp {
 			static inline T get(FloatT in, tag_floating_point) {
 				return static_cast<T>(in);
 			}
+			//BOOL
+			static inline T get(bool in, instance_of<bool>) {
+				return in ? 1 : 0;
+			}
 			//C-STRING
 			//Can't be DRY with std::string :(
 			template<std::size_t N>
@@ -80,6 +84,10 @@ namespace dp {
 			static inline T get(FloatT in, tag_floating_point) {
 				return static_cast<T>(in);
 			}
+			//BOOL
+			static inline T get(bool in, instance_of<bool>) {
+				return in ? 1 : 0;
+			}
 			//C-String
 			template<std::size_t N>
 			static inline T get(const char(&in)[N], instance_of<char[N]>) {
@@ -111,6 +119,10 @@ namespace dp {
 			template<typename FloatT>
 			static inline T get(FloatT in, tag_floating_point) {
 				return static_cast<T>(in);
+			}
+			//BOOL
+			static inline T get(bool in, instance_of<bool>) {
+				return in ? 1 : 0;
 			}
 			//C-String
 			template<std::size_t N>
@@ -160,6 +172,10 @@ namespace dp {
 				ss << in;
 				return ss.str();
 			}
+			//BOOL
+			static inline T get(bool in, instance_of<bool>) {
+				return in ? "true" : "false";
+			}
 			//C-String
 			template<std::size_t N>
 			static inline T get(const char(&in)[N], instance_of<char[N]>) {
@@ -187,6 +203,10 @@ namespace dp {
 				std::wstringstream ss;
 				ss << in;
 				return ss.str();
+			}
+			//BOOL
+			static inline T get(bool in, instance_of<bool>) {
+				return in ? L"true" : L"false";
 			}
 			//C-String
 			template<std::size_t N>

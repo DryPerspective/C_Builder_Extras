@@ -85,6 +85,10 @@ namespace dp {
 			constexpr static inline T get(FloatT in, tag_floating_point) {
 				return static_cast<FloatT>(in);
 			}
+			//BOOL
+			constexpr static inline T get(bool in, instance_of<bool>) {
+				return in ? 1 : 0;
+			}
 			//STRINGS
 			CHARCONV_CONSTEXPR static inline T get(std::string_view in, tag_narrow_string) {
 				//Fortunately integral from_chars is supported on all major platforms
@@ -148,6 +152,10 @@ namespace dp {
 			template<typename FloatT>
 			constexpr static inline T get(FloatT in, tag_floating_point) {
 				return static_cast<FloatT>(in);
+			}
+			//BOOL
+			constexpr static inline T get(bool in, instance_of<bool>) {
+				return in ? 1 : 0;
 			}
 
 			//STRING TYPES
@@ -234,6 +242,10 @@ namespace dp {
 				if (result.ec == std::errc::value_too_large) throw dp::compat::runtime_error("Error converting to std::string: input too large");
 				return T(arr.data(), result.ptr - arr.data());
 			}
+			//BOOL
+			constexpr static inline T get(bool in, instance_of<bool>) {
+				return in ? "true" : "false";
+			}
 		};
 
 		template<typename T>
@@ -295,6 +307,11 @@ namespace dp {
 					static_assert(dependent_false<FloatT>, "Conversion to unsupported widestring type");
 #endif
 				}
+			}
+
+			//BOOL
+			constexpr static inline T get(bool in, instance_of<bool>) {
+				return in ? L"true" : L"false";
 			}
 
 		};
