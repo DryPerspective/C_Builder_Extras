@@ -221,7 +221,7 @@ namespace contract {
 #define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
 #define CONTRACT_ASSERT1(cond)						CONTRACT_ASSERT2(cond, #cond)
 
-#define PRE3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::precondition, DP_FUNC, message))
+#define PRE3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::precondition, DP_FUNC, message, __FILE__, __LINE__))
 #define PRE2(cond, message)				PRE3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
 #define PRE1(cond)						PRE2(cond, #cond)
 
