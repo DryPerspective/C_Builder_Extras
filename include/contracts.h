@@ -63,27 +63,37 @@ namespace contract {
 	//Our violation class contains and provides the nature of a contract violation
 	class violation {
 
+		typedef dp::compat::string string;
+
 		kind m_kind;
-		dp::compat::string	m_func;
-		dp::compat::string	m_message;
+		string	m_func;
+		string	m_message;
+		string  m_file;
+		long m_line;
 
 
 	public:
 
-		violation(kind in_kind, const char* in_func, const char* in_message) : m_kind(in_kind), m_func(in_func), m_message(in_message) {}
-		violation(kind in_kind, const char* in_func, const dp::compat::string& in_message) : m_kind(in_kind), m_func(in_func), m_message(in_message) {}
-#ifdef DP_CBUILDER10
-		violation(kind in_kind, const char* in_func, const UnicodeString& in_message) : m_kind(in_kind), m_func(in_func), m_message(in_message) {}
-#endif
+		//You may be asking "why not use aggregate initialization?" and that's because at least one compiler this was tested on doesn't handle it properly
+		violation(kind in_kind, const string& in_func, const string& in_message, const string& in_file, long in_line)
+			: m_kind(in_kind), m_func(in_func), m_message(in_message), m_file(in_file), m_line(in_line) {}
 
 		kind kind() const DP_NOEXCEPT {
 			return m_kind;
 		}
-		const dp::compat::string& function() const DP_NOEXCEPT {
+		const string& function() const DP_NOEXCEPT {
 			return m_func;
 		}
-		const dp::compat::string& message() const DP_NOEXCEPT {
+		const string& message() const DP_NOEXCEPT {
 			return m_message;
+		}
+
+		const string& file() const DP_NOEXCEPT {
+			return m_file;
+		}
+
+		long line() const DP_NOEXCEPT {
+			return m_line;
 		}
 
 	};
@@ -207,11 +217,11 @@ namespace contract {
 *	And now we move on to the ugly preprocessor magic which makes it all work.
 */
 //We allow 3 "overloads" of the contract annotations - condition, label, and single-use handler.
-#define CONTRACT_ASSERT3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::assertion, DP_FUNC, message))
+#define CONTRACT_ASSERT3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::assertion, DP_FUNC, message, __FILE__, __LINE__))
 #define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
 #define CONTRACT_ASSERT1(cond)						CONTRACT_ASSERT2(cond, #cond)
 
-#define PRE3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::precondition, DP_FUNC, message))
+#define PRE3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::precondition, DP_FUNC, message, __FILE__, __LINE__))
 #define PRE2(cond, message)				PRE3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
 #define PRE1(cond)						PRE2(cond, #cond)
 
@@ -219,9 +229,9 @@ namespace contract {
 #if defined(DP_CBUILDER11) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L
 //We have to construct the violation object as a separate expression so that the call to __func__ isn't deferred to inside operator() of the defer class
 //We also have to make it on the same line so the names can be generated without collision.
-#define POST3(cond, message, handler)	dp::contract::violation DP_CONCAT(violation,__LINE__){dp::contract::postcondition, DP_FUNC, message}; DEFER(if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(DP_CONCAT(violation,__LINE__)))
+#define POST3(cond, message, handler)	dp::contract::violation DP_CONCAT(violation,__LINE__){dp::contract::postcondition, DP_FUNC, message, __FILE__, __LINE__}; DEFER(if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(DP_CONCAT(violation,__LINE__)))
 #else
-#define POST3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message))
+#define POST3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message, __FILE__, __LINE__))
 #endif
 #define POST2(cond, message)			POST3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
 #define POST1(cond)						POST2(cond, #cond)
