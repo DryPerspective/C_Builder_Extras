@@ -16,15 +16,13 @@
 
 #if defined(DB_CBUILDER11) || __cplusplus >= 201103L || defined(_MSC_VER)
 #define DP_NOEXCEPT noexcept
-#else
-#define DP_NOEXCEPT
-#endif
-
-#if defined(DB_CBUILDER11) || __cplusplus >= 201103L || defined(_MSC_VER)
 #define DP_NORETURN [[noreturn]]
 #else
+#define DP_NOEXCEPT
 #define DP_NORETURN
 #endif
+
+
 /*
 *	A contracts interface, allowing for standard error handling which encapsulates the nature of an error.
 *	We borrow from the current P2900 design a little.
@@ -209,7 +207,53 @@ namespace contract {
 	inline policy get_policy() DP_NOEXCEPT {
 		return detail::current_policy();
 	}
+
+
+	//Scope local policy/handler objects
+	class scoped_policy {
+		policy m_previous;
+		scoped_policy(const scoped_policy&);
+		scoped_policy& operator=(const scoped_policy&);
+
+	public:
+
+		scoped_policy(policy new_policy) : m_previous(get_policy()) {
+			set_policy(new_policy);
+		}
+
+		~scoped_policy() {
+			set_policy(m_previous);
+		}
+
+	};
+
+	class scoped_handler {
+		handler_t m_previous;
+		scoped_handler(const scoped_handler&);
+		scoped_handler& operator=(const scoped_handler&);
+
+	public:
+
+		scoped_handler(handler_t new_handler) : m_previous(get_handler()) {
+			set_handler(new_handler);
+		}
+
+		~scoped_handler() {
+			set_handler(m_previous);
+		}
+	};
+
+
+} //namespace contract
+
+//Provide aliases in our typical namespace for RAII objects.
+namespace raii {
+	typedef dp::contract::scoped_handler	contract_handler;
+	typedef dp::contract::scoped_policy		contract_policy;
 }
+
+
+
 }
 
 
