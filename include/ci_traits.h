@@ -15,6 +15,13 @@
 #include <string_view>
 #endif
 
+#if defined(DB_CBUILDER11) || __cplusplus >= 201103L || defined(_MSC_VER)
+#define DP_CONSTEXPR constexpr
+#else
+#define DP_CONSTEXPR
+#endif
+
+
 
 namespace dp {
 
@@ -64,7 +71,7 @@ namespace dp {
 	//As such, we need to template the class this cast function uses as its stringlike.
 	//This way it'll work with std::string, std::string_view, and a custom string_view which follows the pattern.
 	template<typename Dest_Traits, typename CharT, typename Src_Traits, template<typename, typename> class StrT>
-	StrT<CharT, Dest_Traits> traits_cast(StrT<CharT, Src_Traits> in) {
+	DP_CONSTEXPR StrT<CharT, Dest_Traits> traits_cast(StrT<CharT, Src_Traits> in) {
 		return StrT<CharT, Dest_Traits>(in.data(), in.size());
 	}
 
@@ -92,5 +99,7 @@ namespace dp {
 
 }
 
+
+#undef DP_CONSTEXPR
 
 #endif
