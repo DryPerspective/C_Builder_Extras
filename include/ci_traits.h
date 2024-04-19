@@ -29,21 +29,21 @@ namespace dp {
 	template<typename CharT>
 	class ci_traits : public std::char_traits<CharT> {
 
-		static char upper(char in) {
+		DP_CONSTEXPR static char upper(char in) {
 			return std::toupper(static_cast<unsigned char>(in));
 		}
-		static wchar_t upper(wchar_t in) {
+		DP_CONSTEXPR static wchar_t upper(wchar_t in) {
 			return std::towupper(in);
 		}
 
 	public:
-		static bool eq(CharT lhs, CharT rhs) {
+		DP_CONSTEXPR static bool eq(CharT lhs, CharT rhs) {
 			return upper(lhs) == upper(rhs);
 		}
-		static bool lt(CharT lhs, CharT rhs) {
+		DP_CONSTEXPR static bool lt(CharT lhs, CharT rhs) {
 			return upper(lhs) < upper(rhs);
 		}
-		static int compare(const CharT* lhs, const CharT* rhs, std::size_t n) {
+		DP_CONSTEXPR static int compare(const CharT* lhs, const CharT* rhs, std::size_t n) {
 			while (n-- != 0) {
 				if (upper(*lhs) < upper(*rhs)) return -1;
 				if (upper(*lhs) > upper(*rhs)) return 1;
@@ -52,7 +52,7 @@ namespace dp {
 			}
 			return 0;
 		}
-		static const CharT* find(const CharT* str, std::size_t n, CharT ch) {
+		DP_CONSTEXPR static const CharT* find(const CharT* str, std::size_t n, CharT ch) {
 			const CharT upper_ch = upper(ch);
 			while (n-- != 0) {
 				if (upper(*str) == upper_ch) return str;
