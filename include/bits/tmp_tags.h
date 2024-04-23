@@ -108,7 +108,7 @@ namespace dp {
 	struct tag_delphi_string {
 		DP_CONSTEXPR tag_delphi_string() {}
 		DP_CONSTEXPR tag_delphi_string(instance_of<AnsiString>) {}
-#ifdef BUILDER10
+#ifdef DP_CBUILDER10
 		DP_CONSTEXPR tag_delphi_string(instance_of<UnicodeString>) {}
 #endif
 	};
