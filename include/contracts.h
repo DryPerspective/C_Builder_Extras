@@ -269,17 +269,39 @@ namespace raii {
 #define PRE2(cond, message)				PRE3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
 #define PRE1(cond)						PRE2(cond, #cond)
 
+#define POST3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message, __FILE__, __LINE__))
+#define POST2(cond, message)			POST3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
+#define POST1(cond)						POST2(cond, #cond)
+
+
+
 //If on C++17 we can defer evaluation of postconditions to the end of the scope
 #if defined(DP_CBUILDER11) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L
 //We have to construct the violation object as a separate expression so that the call to __func__ isn't deferred to inside operator() of the defer class
 //We also have to make it on the same line so the names can be generated without collision.
-#define POST3(cond, message, handler)	dp::contract::violation DP_CONCAT(violation,__LINE__){dp::contract::postcondition, DP_FUNC, message}; DEFER(if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(DP_CONCAT(violation,__LINE__)))
+#define DEFER_POST3(cond, message, handler)	dp::contract::violation DP_CONCAT(violation,__LINE__)(dp::contract::postcondition, DP_FUNC, message, __FILE__, __LINE__); DEFER(if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(DP_CONCAT(violation,__LINE__)))
+#define DEFER_POST2(cond, message)			DEFER_POST3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
+#define DEFER_POST1(cond)					DEFER_POST2(cond, #cond)
 #else
-#define POST3(cond, message, handler)	if(dp::contract::get_policy() != dp::contract::ignore && ! ( cond )) handler(dp::contract::violation(dp::contract::postcondition, DP_FUNC, message))
-#endif
-#define POST2(cond, message)			POST3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
-#define POST1(cond)						POST2(cond, #cond)
+//And we're on a C++98 compiler we can't overload anyway
+//Believe it or not, with the limitations on DEFER in C++98, it's easier to spin a new version just for deferred postconditions.
+#define DP_DEFER_POST_STRUCT(cond, violation_name, handler) struct DP_CONCAT(struct_, violation_name){ \
+														dp::contract::violation m_viol; \
+														DP_CONCAT(struct_, violation_name)(const dp::contract::violation& in) : m_viol(in) {} \
+														~DP_CONCAT(struct_, violation_name)() { \
+															if (dp::contract::get_policy() != dp::contract::ignore && !(cond)) {   \
+																	handler(m_viol); \
+															} \
+														} \
+													} DP_CONCAT(instance_, violation_name)(violation_name);
 
+//Otherwise we're on a C++98 compiler. C++Builder 10 is uniquely able to process variadic args
+#if defined(DP_CBUILDER10) || __cplusplus >= 201103L || defined(_MSC_VER)
+#define DEFER_POST3(cond, message, handler) dp::contract::violation DP_CONCAT(violation,__LINE__)(dp::contract::postcondition, DP_FUNC, message, __FILE__, __LINE__); DP_DEFER_POST_STRUCT(cond, DP_CONCAT(violation,__LINE__), handler)
+#define DEFER_POST2(cond, message)			DEFER_POST3(cond, message, (dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler))
+#define DEFER_POST1(cond)					DEFER_POST2(cond, #cond)
+#endif
+#endif
 
 
 
@@ -288,26 +310,8 @@ namespace raii {
 #define CONTRACT_ASSERT( ... )	DP_MACRO_OVERLOAD(CONTRACT_ASSERT, __VA_ARGS__)
 #define PRE(...)				DP_MACRO_OVERLOAD(PRE, __VA_ARGS__)
 #define POST(...)				DP_MACRO_OVERLOAD(POST, __VA_ARGS__)
-//But C++Builder10 does not enjoy proper DEFER functionality, despite having __VA_ARGS__
-//C++Builder11 does, as does every other compiler which supports __VA_ARGS__.
-#if defined(DP_CBUILDER10) && !defined(DP_CBUILDER11)
-#define DEFER_POST(...)			DEFER(POST(__VA_ARGS__))
+#define DEFER_POST(...)			DP_MACRO_OVERLOAD(DEFER_POST, __VA_ARGS__)
 #else
-#define DEFER_POST(...)			POST(__VA_ARGS__)
-#endif
-#else
-//And we're on a C++98 compiler we can't overload anyway
-//Believe it or not, with the limitations on DEFER in C++98, it's easier to spin a new version just for deferred postconditions.
-#define DP_DEFER_POST_STRUCT(cond, violation_name) struct DP_CONCAT(struct_, violation_name){ \
-														dp::contract::violation m_viol; \
-														DP_CONCAT(struct_, violation_name)(const dp::contract::violation& in) : m_viol(in) {} \
-														~DP_CONCAT(struct_, violation_name)() { \
-															if (dp::contract::get_policy() != dp::contract::ignore && !(cond)) {   \
-																	(dp::contract::get_handler() ? dp::contract::get_handler() : dp::contract::default_handler)(m_viol); \
-															} \
-														} \
-													} DP_CONCAT(instance_, violation_name)(violation_name); 
-
 #define CONTRACT_ASSERT(cond)	CONTRACT_ASSERT1(cond)
 #define	PRE(cond)				PRE1(cond)
 #define	POST(cond)				POST1(cond)
