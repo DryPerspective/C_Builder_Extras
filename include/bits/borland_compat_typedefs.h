@@ -34,7 +34,11 @@ namespace dp {
 namespace compat {
 
 #ifdef __BORLANDC__
+#ifdef DP_CBUILDER10
+	typedef UnicodeString		string;
+#else
 	typedef AnsiString			string;
+#endif
 	typedef Exception			runtime_error;
 
 #else
