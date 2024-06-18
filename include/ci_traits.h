@@ -30,9 +30,9 @@ namespace dp {
 	class ci_traits : public std::char_traits<CharT> {
 
 		DP_CONSTEXPR static char upper(char in) {
-			return std::toupper(static_cast<unsigned char>(in));
+			return (in > 'A' && in < 'Z') ? (in + 'a' - 'A') : in;
 		}
-		DP_CONSTEXPR static wchar_t upper(wchar_t in) {
+		static wchar_t upper(wchar_t in) {
 			return std::towupper(in);
 		}
 
