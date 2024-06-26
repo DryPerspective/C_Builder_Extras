@@ -16,11 +16,34 @@ namespace dp {
 		const char* function;
 		const char* file;
 		int line;
+
+		//Even though this is essentially an aggregate we need a constructor
+		//To allow certain compiler builtins to behave themselves
+		constexpr source_location(const char* in_func, const char* in_file, int in_line) : function(in_func), file(in_file), line(in_line) {}
 	};
 
 }
 
 #define DP_SOURCE_LOC_HERE dp::source_location{DP_FUNC, __FILE__, __LINE__}
+
+/*
+*  There is no easy way to mimic the functionality of std::source_location::current properly
+*  Even "modern" C++Builder is built on a version of CLang which cannot support it
+*  As such, we need to do some ugly preprocessor hackery
+*/
+
+#ifdef _MSC_VER
+#define DP_SOURCE_LOCATION_CURRENT dp::source_location{__builtin_FUNCTION(), __FILE__, __LINE__}
+#elif defined(__clang__) && __clang_major__ >= 9
+#define DP_SOURCE_LOCATION_CURRENT dp::source_location{__builtin_FUNCTION(), __FILE__, __LINE__}
+//Regrettably before CLang 9 there was no way to get a function in this context which would do the right thing
+#elif defined(__clang__)
+#define DP_SOURCE_LOCATION_CURRENT dp::source_location{"", __FILE__, __LINE__}
+#elif defined(__GNUC__)
+#define DP_SOURCE_LOCATION_CURRENT dp::source_location{__builtin_FUNCTION(), __FILE__, __LINE__}
+#endif
+
+
 
 
 

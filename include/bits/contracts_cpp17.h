@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string_view>
+#include <type_traits>
 
 #include "bits/source_location.h"
 #include "bits/borland_compat_typedefs.h"
@@ -42,9 +43,13 @@ namespace dp {
 			constexpr int line() const {
 				return loc.line;
 			}
+
+			constexpr void append_message(std::string_view in_msg) {
+				msg = in_msg;
+			}
 		};
 
-		class violation_exception : std::runtime_error {
+		class violation_exception : public std::runtime_error {
 		public:
 			violation_exception(const std::string& msg) : std::runtime_error{ msg } {}
 		};
@@ -84,21 +89,38 @@ namespace dp {
 			constexpr inline void ignore(Args&&...) noexcept {}
 		};
 
+
+
 		/*
 		*  And, our primary assertion function
 		*/
-		template<policy pol = policy::enforce, typename handler = default_handler, typename... Args>
-		constexpr inline void contract_assert(bool condition, handler hand = default_handler{}, Args&&... args) {
+		template<policy pol = policy::enforce, typename handler = default_handler>
+		constexpr inline  
+		std::enable_if_t<!std::is_constructible_v<std::string_view, handler>, void> //Returns void, but we need to SFINAE to ensure that a message on the other overload doesn't try to resolve as handler
+					contract_assert(bool condition, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }) {
 			if constexpr (pol == policy::enforce) {
-				hand.enforce(condition, std::forward<Args>(args)...);
+				hand.enforce(condition, viol);
 			}
 			else if constexpr (pol == policy::observe) {
-				hand.observe(condition, std::forward<Args>(args)...);
+				hand.observe(condition, viol);
 			}
 			else {
-				hand.ignore(condition, std::forward<Args>(args)...);
+				hand.ignore(condition, viol);
 			}
+		}
 
+		template<policy pol = policy::enforce, typename handler = default_handler>
+		constexpr inline void contract_assert(bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, ""}) {
+			viol.append_message(message);
+			if constexpr (pol == policy::enforce) {
+				hand.enforce(condition, viol);
+			}
+			else if constexpr (pol == policy::observe) {
+				hand.observe(condition, viol);
+			}
+			else {
+				hand.ignore(condition, viol);
+			}
 		}
 
 
