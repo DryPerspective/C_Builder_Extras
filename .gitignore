@@ -370,3 +370,4 @@ FodyWeavers.xsd
 /CppProperties.json
 /Main.cpp
 *.~h
+/include/contracts - Old.h
