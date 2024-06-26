@@ -35,7 +35,7 @@ namespace dp {
 
 		public:
 
-			violation(const dp::source_location in_loc, const dp::compat::string in_msg) : loc(in_loc), msg(in_msg) {}
+			violation(const dp::source_location& in_loc, const dp::compat::string in_msg) : loc(in_loc), msg(in_msg) {}
 
 			dp::compat::string function() const {
 				return loc.function;
@@ -53,6 +53,7 @@ namespace dp {
 				return loc.line;
 			}
 		};
+
 
 		//And our violation exception.
 #ifdef DP_CBUILDER5
@@ -76,19 +77,11 @@ namespace dp {
 
 		struct default_handler {
 
-			void enforce(bool condition) {
-				if (!condition) throw violation_exception("Contract violation");
-			}
+
 			void enforce(bool condition, const dp::contract::violation& viol) {
 				if (!condition) throw violation_exception(default_message(viol));
 			}
 
-			void observe(bool condition) {
-				if (!condition) {
-					std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
-					out << "Contract violation\n";
-				}
-			}
 			void observe(bool condition, const dp::contract::violation& viol) {
 				if (!condition) {
 					std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
@@ -96,14 +89,14 @@ namespace dp {
 				}
 			}
 
-			void ignore(bool) {}
+
 			void ignore(bool, const dp::contract::violation&) {}
 
 		};
 
 		//And our primary function. We suffer from the lack of C++98's support for default template arguments on template functions
 		template<policy::type pol, typename handler>
-		void contract_assert(bool condition, handler hand, dp::contract::violation viol) {
+		void contract_assert(bool condition, handler hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (pol == policy::enforce) {
 				hand.enforce(condition, viol);
 			}
@@ -129,7 +122,7 @@ namespace dp {
 #endif
 
 #ifndef DP_DEFAULT_POLICY
-#define DP_DEFAULT_POLICY dp::contract::policy::enforce
+#define DP_DEFAULT_POLICY enforce
 #endif
 
 #define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert<dp::contract::policy:: DP_DEFAULT_POLICY>(cond, handler(), dp::contract::violation(DP_SOURCE_LOC_HERE, message))

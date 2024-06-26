@@ -9,6 +9,7 @@
 #include <string_view>
 #include <type_traits>
 
+
 #include "bits/source_location.h"
 #include "bits/borland_compat_typedefs.h"
 
@@ -54,37 +55,30 @@ namespace dp {
 			violation_exception(const std::string& msg) : std::runtime_error{ msg } {}
 		};
 
+		dp::compat::string default_message(const violation& in) {
+			return dp::compat::string{ "Contract violation in function " } + in.function() + " : " + dp::compat::string{ in.message() };
+		}
+
+
 		/*
 		*	Our "default handler" to determine the default behaviour of our contract violation handling
 		*	We have to do some silly dances of if(!condition) to meet the constexpr specification 
 		*/
 		struct default_handler {
 
-			constexpr inline void enforce(bool condition) {
-				if (!condition) {
-					throw violation_exception{ "Contract violation" };
-				}
-			}
 
 			constexpr inline void enforce(bool condition, const dp::contract::violation& viol) {
 				if (!condition) {
-					throw violation_exception{ dp::compat::string{"Contract violation in function "} + viol.function() + " : " + dp::compat::string{viol.message()} };
-				}
-			}
-
-			constexpr inline void observe(bool condition) {
-				if (!condition) {
-					std::cerr << "Contract violation\n";
+					throw violation_exception{ default_message(viol)};
 				}
 			}
 
 			constexpr inline void observe(bool condition, const dp::contract::violation& viol) {
 				if (!condition) {
-					std::cerr << "Contract violation in function " << viol.function() << " : " << viol.message() << '\n';
+					std::clog << default_message(viol) << '\n';
 				}
 			}
 
-			constexpr inline void ignore(bool) noexcept {}
 			template<typename... Args>
 			constexpr inline void ignore(Args&&...) noexcept {}
 		};
@@ -109,8 +103,8 @@ namespace dp {
 			}
 		}
 
-		template<policy pol = policy::enforce, typename handler = default_handler>
-		constexpr inline void contract_assert(bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, ""}) {
+		template<policy pol = policy::enforce, typename handler = default_handler, typename... Args>
+		constexpr inline void contract_assert(bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, ""}, Args&&... args) {
 			viol.append_message(message);
 			if constexpr (pol == policy::enforce) {
 				hand.enforce(condition, viol);
@@ -138,7 +132,7 @@ namespace dp {
 #endif
 
 #ifndef DP_DEFAULT_POLICY
-#define DP_DEFAULT_POLICY dp::contract::policy::enforce
+#define DP_DEFAULT_POLICY enforce
 #endif
 
 
