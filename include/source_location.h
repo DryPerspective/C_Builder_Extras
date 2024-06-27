@@ -10,6 +10,12 @@
 #include "bits/borland_compat_typedefs.h"
 #include "bits/macros.h"
 
+#if defined(DB_CBUILDER11) || __cplusplus >= 201103L || defined(_MSC_VER)
+#define DP_CONSTEXPR constexpr
+#else
+#define DP_CONSTEXPR
+#endif
+
 namespace dp {
 
 	struct source_location {
@@ -19,7 +25,7 @@ namespace dp {
 
 		//Even though this is essentially an aggregate we need a constructor
 		//To allow certain compiler builtins to behave themselves
-		constexpr source_location(const char* in_func, const char* in_file, int in_line) : function(in_func), file(in_file), line(in_line) {}
+		DP_CONSTEXPR source_location(const char* in_func, const char* in_file, int in_line) : function(in_func), file(in_file), line(in_line) {}
 	};
 
 }
@@ -49,6 +55,6 @@ namespace dp {
 
 
 
-
+#undef DP_CONSTEXPR
 
 #endif

@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 #include "bits/borland_compat_typedefs.h"
-#include "bits/source_location.h"
+#include "source_location.h"
 
 #ifdef __BORLANDC__
 #include "bits/borland_version_defs.h"
@@ -18,13 +18,11 @@
 
 namespace dp {
 	namespace contract {
-		//Makeshift scoped enum for our policy
-		struct policy {
-			enum type {
-				enforce,
-				observe,
-				ignore
-			};
+		//Policy enum
+		enum policy {
+			enforce,
+			observe,
+			ignore
 		};
 
 		//Our representation of a violation
@@ -37,16 +35,16 @@ namespace dp {
 
 			violation(const dp::source_location& in_loc, const dp::compat::string in_msg) : loc(in_loc), msg(in_msg) {}
 
-			dp::compat::string function() const {
+			const char* function() const {
 				return loc.function;
 			}
 			
-			dp::compat::string file() const {
+			const char* file() const {
 				return loc.file;
 			}
 
-			dp::compat::string message() const {
-				return msg;
+			const char* message() const {
+				return msg.c_str();
 			}
 
 			int line() const {
@@ -78,33 +76,33 @@ namespace dp {
 		struct default_handler {
 
 
-			void enforce(bool condition, const dp::contract::violation& viol) {
-				if (!condition) throw violation_exception(default_message(viol));
+			void enforce(const dp::contract::violation& viol) {
+				throw violation_exception(default_message(viol));
 			}
 
-			void observe(bool condition, const dp::contract::violation& viol) {
-				if (!condition) {
-					std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
-					out << default_message(viol) << '\n';
-				}
+			void observe(const dp::contract::violation& viol) {
+				std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
+				out << default_message(viol) << '\n';
+				
 			}
 
 
-			void ignore(bool, const dp::contract::violation&) {}
+			void ignore(const dp::contract::violation&) {}
 
 		};
 
 		//And our primary function. We suffer from the lack of C++98's support for default template arguments on template functions
-		template<policy::type pol, typename handler>
+		template<policy pol, typename handler>
 		void contract_assert(bool condition, handler hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+			if (condition) return;
 			if (pol == policy::enforce) {
-				hand.enforce(condition, viol);
+				hand.enforce(viol);
 			}
 			else if (pol == policy::observe) {
-				hand.observe(condition, viol);
+				hand.observe(viol);
 			}
 			else {
-				hand.ignore(condition, viol);
+				hand.ignore(viol);
 			}
 		}
 

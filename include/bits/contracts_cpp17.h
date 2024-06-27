@@ -8,9 +8,10 @@
 #include <iostream>
 #include <string_view>
 #include <type_traits>
+#include <fstream>
 
 
-#include "bits/source_location.h"
+#include "source_location.h"
 #include "bits/borland_compat_typedefs.h"
 
 namespace dp {
@@ -20,6 +21,11 @@ namespace dp {
 			observe,
 			ignore
 		};
+
+		//For backwards compatibility and ease of use, we make the names available in this scope
+		constexpr inline auto enforce = policy::enforce;
+		constexpr inline auto observe = policy::observe;
+		constexpr inline auto ignore = policy::ignore;
 
 		class violation {
 			dp::source_location loc;
@@ -62,21 +68,17 @@ namespace dp {
 
 		/*
 		*	Our "default handler" to determine the default behaviour of our contract violation handling
-		*	We have to do some silly dances of if(!condition) to meet the constexpr specification 
 		*/
 		struct default_handler {
 
 
-			constexpr inline void enforce(bool condition, const dp::contract::violation& viol) {
-				if (!condition) {
-					throw violation_exception{ default_message(viol)};
-				}
+			[[noreturn]] inline void enforce(const dp::contract::violation& viol) {
+				throw violation_exception{ default_message(viol)};
 			}
 
-			constexpr inline void observe(bool condition, const dp::contract::violation& viol) {
-				if (!condition) {
-					std::clog << default_message(viol) << '\n';
-				}
+			inline void observe(const dp::contract::violation& viol) {
+				std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
+				out << default_message(viol) << '\n';
 			}
 
 			template<typename... Args>
@@ -88,37 +90,80 @@ namespace dp {
 		/*
 		*  And, our primary assertion function
 		*/
-		template<policy pol = policy::enforce, typename handler = default_handler>
+		template<policy pol = policy::enforce, typename handler = default_handler, typename... Args>
 		constexpr inline  
 		std::enable_if_t<!std::is_constructible_v<std::string_view, handler>, void> //Returns void, but we need to SFINAE to ensure that a message on the other overload doesn't try to resolve as handler
-					contract_assert(bool condition, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }) {
+					contract_assert(bool condition, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }, Args&&... args) {
+			if (condition) return;
+
+			//If you get an error that this did not evaluate to constant or could not be used in a constant expression, then odds are your assertion failed.
 			if constexpr (pol == policy::enforce) {
-				hand.enforce(condition, viol);
+				hand.enforce(viol, std::forward<Args>(args)...);
 			}
 			else if constexpr (pol == policy::observe) {
-				hand.observe(condition, viol);
+				hand.observe(viol, std::forward<Args>(args)...);
 			}
 			else {
-				hand.ignore(condition, viol);
+				hand.ignore(viol, std::forward<Args>(args)...);
 			}
 		}
 
 		template<policy pol = policy::enforce, typename handler = default_handler, typename... Args>
 		constexpr inline void contract_assert(bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, ""}, Args&&... args) {
+			
+			if (condition) return;
+
+			//If you get an error that this did not evaluate to constant or could not be used in a constant expression, then odds are your assertion failed.
 			viol.append_message(message);
 			if constexpr (pol == policy::enforce) {
-				hand.enforce(condition, viol);
+				hand.enforce(viol, std::forward<Args>(args)...);
 			}
 			else if constexpr (pol == policy::observe) {
-				hand.observe(condition, viol);
+				hand.observe(viol, std::forward<Args>(args)...);
 			}
 			else {
-				hand.ignore(condition, viol);
+				hand.ignore(viol, std::forward<Args>(args)...);
+			}
+		}
+
+		template<typename handler = default_handler, typename... Args>
+		constexpr inline 
+			std::enable_if_t<!std::is_constructible_v<std::string_view, handler>, void> //Returns void, but we need to SFINAE to ensure that a message on the other overload doesn't try to resolve as handler			
+				contract_assert(dp::contract::policy pol, bool condition, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }, Args&&... args) {
+			if (condition) return;
+
+			if (pol == policy::enforce) {
+				hand.enforce(viol, std::forward<Args>(args)...);
+			}
+			else if (pol == policy::observe) {
+				hand.observe(viol, std::forward<Args>(args)...);
+			}
+			else {
+				hand.ignore(viol, std::forward<Args>(args)...);
+			}
+		}
+
+		template<typename handler = default_handler, typename... Args>
+		constexpr inline void contract_assert(dp::contract::policy pol, bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }, Args&&... args) {
+			if (condition) return;
+
+			viol.append_message(message);
+
+			if (pol == policy::enforce) {
+				hand.enforce(viol, std::forward<Args>(args)...);
+			}
+			else if (pol == policy::observe) {
+				hand.observe(viol, std::forward<Args>(args)...);
+			}
+			else {
+				hand.ignore(viol, std::forward<Args>(args)...);
 			}
 		}
 
 
 	}
+
+	using contract::contract_assert;
 }
 
 /*
