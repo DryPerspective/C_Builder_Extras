@@ -171,6 +171,7 @@ namespace dp {
 */
 
 
+#ifndef DP_NO_CONTRACT_MACROS
 //Hook to define the handler used by the predefined macros.
 #ifndef DP_DEFAULT_HANDLER
 #define DP_DEFAULT_HANDLER dp::contract::default_handler
@@ -187,7 +188,7 @@ namespace dp {
 
 
 #define CONTRACT_ASSERT(...)						DP_MACRO_OVERLOAD(CONTRACT_ASSERT, __VA_ARGS__)
-
+#endif
 
 
 #endif

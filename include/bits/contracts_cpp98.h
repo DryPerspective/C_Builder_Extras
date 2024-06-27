@@ -70,7 +70,7 @@ namespace dp {
 #endif
 
 		dp::compat::string default_message(const violation& in) {
-			return "Contract violation in function " + in.function() + " : " + in.message();
+			return dp::compat::string("Contract violation in function ") + in.function() + " : " + in.message();
 		}
 
 		struct default_handler {
@@ -106,6 +106,7 @@ namespace dp {
 			}
 		}
 
+
 	}
 }
 
@@ -114,6 +115,7 @@ namespace dp {
 *  And given this is a safety tool, we want it to be as easy to use as possible
 */
 
+#ifndef DP_NO_CONTRACT_MACROS
 //Hook to define the handler used by the predefined macros.
 #ifndef DP_DEFAULT_HANDLER
 #define DP_DEFAULT_HANDLER dp::contract::default_handler
@@ -133,7 +135,7 @@ namespace dp {
 #else
 #define CONTRACT_ASSERT(arg)	CONTRACT_ASSERT1(arg)
 #endif
-
+#endif
 
 
 
