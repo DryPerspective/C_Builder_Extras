@@ -30,7 +30,7 @@ namespace dp {
 
 }
 
-#define DP_SOURCE_LOC_HERE dp::source_location{DP_FUNC, __FILE__, __LINE__}
+#define DP_SOURCE_LOCATION_THIS_FUNCTION dp::source_location{DP_FUNC, __FILE__, __LINE__}
 
 /*
 *  There is no easy way to mimic the functionality of std::source_location::current properly

@@ -182,7 +182,7 @@ namespace dp {
 #endif
 
 
-#define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert<dp::contract::policy:: DP_DEFAULT_POLICY>(cond, handler{}, dp::contract::violation{DP_SOURCE_LOC_HERE, message})
+#define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert<dp::contract::policy:: DP_DEFAULT_POLICY>(cond, handler{}, dp::contract::violation{DP_SOURCE_LOCATION_THIS_FUNCTION, message})
 #define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, DP_DEFAULT_HANDLER)
 #define CONTRACT_ASSERT1(cond)						CONTRACT_ASSERT2(cond, #cond)
 
