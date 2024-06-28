@@ -106,6 +106,21 @@ namespace dp {
 			}
 		}
 
+		template<typename handler>
+		void contract_assert(policy pol, bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+			if (condition) return;
+
+			if (pol == policy::enforce) {
+				hand.enforce(viol);
+			}
+			else if (pol == policy::observe) {
+				hand.observe(viol);
+			}
+			else {
+				hand.ignore(viol);
+			}
+		}
+
 
 	}
 
