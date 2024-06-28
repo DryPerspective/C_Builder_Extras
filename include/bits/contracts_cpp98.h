@@ -93,7 +93,7 @@ namespace dp {
 
 		//And our primary function. We suffer from the lack of C++98's support for default template arguments on template functions
 		template<policy pol, typename handler>
-		void contract_assert(bool condition, handler hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+		void contract_assert(bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 			if (pol == policy::enforce) {
 				hand.enforce(viol);
@@ -108,6 +108,8 @@ namespace dp {
 
 
 	}
+
+	using contract::contract_assert;
 }
 
 /*
