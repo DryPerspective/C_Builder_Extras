@@ -62,7 +62,7 @@ namespace dp {
 		};
 
 		dp::compat::string default_message(const violation& in) {
-			return dp::compat::string{ "Contract violation in function " } + in.function() + " : " + dp::compat::string{ in.message() };
+			return dp::compat::string{ "Contract violation in function " } + in.function() + ": " + dp::compat::string{ in.message() };
 		}
 
 
