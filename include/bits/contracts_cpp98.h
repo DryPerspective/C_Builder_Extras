@@ -34,7 +34,7 @@ namespace dp {
 
 		public:
 
-			violation(const dp::source_location& in_loc, const std::string& in_msg) : loc(in_loc), msg(in_msg) {}
+			violation(const dp::source_location& in_loc, const std::string in_msg) : loc(in_loc), msg(in_msg) {}
 
 			const char* function() const {
 				return loc.function;
@@ -62,8 +62,7 @@ namespace dp {
 #ifdef DP_CBUILDER10
 			violation_exception(const UnicodeString& in) : Exception(in) {}
 #endif
-            violation_exception(const std::string& in) : Exception(in.c_str()) {}
-
+			violation_exception(const std::string& in) : Exception(in.c_str()) {}
 		};
 #else
 		class violation_exception : public std::runtime_error {
@@ -73,7 +72,7 @@ namespace dp {
 #endif
 
 		std::string default_message(const violation& in) {
-			return std::string("Contract violation in function ") + std::string(in.function()) + ": " + std::string(in.message());
+			return std::string("Contract violation in function ") + in.function() + ": " + in.message();
 		}
 
 		struct default_handler {
@@ -94,9 +93,20 @@ namespace dp {
 
 		};
 
+
+//Disable certain warnings which are spurious for these functions.
+#ifdef __BORLANDC__
+#pragma option push
+#pragma warn -8008
+#pragma warn -8066
+#elif defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4127)
+#endif
+
 		//And our primary function. We suffer from the lack of C++98's support for default template arguments on template functions
 		template<policy pol, typename handler>
-		void contract_assert(bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation()) {
+		void contract_assert(bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 			if (pol == policy::enforce) {
 				hand.enforce(viol);
@@ -110,7 +120,7 @@ namespace dp {
 		}
 
 		template<typename handler>
-		void contract_assert(::dp::contract::policy pol, bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation()) {
+		void contract_assert(policy pol, bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
 			if (pol == policy::enforce) {
@@ -123,7 +133,11 @@ namespace dp {
 				hand.ignore(viol);
 			}
 		}
-
+#ifdef __BORLANDC__
+#pragma option pop
+#elif defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 	}
 
