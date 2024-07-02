@@ -37,7 +37,8 @@ namespace dp {
         defer& operator=(const defer&) = delete;
         defer& operator=(defer&&) = delete;
 
-        ~defer() noexcept(noexcept(std::apply(cleanup, call_args))) {
+        ~defer() noexcept {
+            static_assert(noexcept(std::apply(cleanup, call_args)), "Attempt to defer a non-noexcept task");
             std::apply(std::move(cleanup), std::move(call_args));
         }
 
@@ -65,7 +66,8 @@ namespace dp {
         defer& operator=(const defer&) = delete;
         defer& operator=(defer&&) = delete;
 
-        ~defer() noexcept(noexcept(std::invoke(cleanup))) {
+        ~defer() noexcept {
+            static_assert(noexcept(std::invoke(cleanup)), "Attempt to defer a non-noexcept task");
             std::invoke(cleanup);
         }
     };
@@ -75,15 +77,8 @@ namespace dp {
 
 
 
-#define DEFER(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]() mutable noexcept(false) {ARGS ;});
-#define SCOPE_EXIT(ARGS) DEFER(ARGS)
-#define SCOPE_SUCCESS(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]()mutable noexcept(false){ if(! std::uncaught_exceptions()){ \
-                                                                                                                                            ARGS ; \
-                                                                                                                                           }});
+#define DEFER(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]() mutable noexcept {ARGS ;});
 
-#define SCOPE_FAIL(ARGS) [[maybe_unused]] auto DP_UNIQUE_NAME(Defer_Struct) = dp::defer([&]()mutable noexcept(false){ if(std::uncaught_exceptions()){ \
-                                                                                                                                            ARGS ; \
-                                                                                                                                           }});
 
 
 

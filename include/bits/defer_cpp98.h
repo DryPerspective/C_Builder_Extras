@@ -18,29 +18,7 @@
                         }  impl; \
                     } DP_UNIQUE_NAME(Defer_Struct);
 
-#define SCOPE_EXIT(ARGS) DEFER(ARGS)
 
-#define SCOPE_FAIL(ARGS) struct{\
-                            struct Defer_Impl{ \
-                                Defer_Impl() {} \
-                                ~Defer_Impl(){ \
-                                    if(std::uncaught_exception()){ \
-                                        ARGS ;\
-                                    } \
-                                } \
-                            } impl; \
-                        } DP_UNIQUE_NAME(Defer_Struct);
-
-#define SCOPE_SUCCESS(ARGS) struct{\
-                                struct Defer_Impl{ \
-                                    Defer_Impl() {} \
-                                    ~Defer_Impl(){ \
-                                        if(!std::uncaught_exception()){ \
-                                            ARGS ;\
-                                        } \
-                                    } \
-                                } impl; \
-                        } DP_UNIQUE_NAME(Defer_Struct);
 
 
 #endif
