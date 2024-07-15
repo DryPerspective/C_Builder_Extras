@@ -26,11 +26,22 @@ namespace dp {
 			ignore
 		};
 
+		class violation;
+
+		//Our handler function type
+		typedef void(*handler_t)(violation);
+
 		//Our representation of a violation
 		class violation {
 
 			dp::source_location loc;
 			std::string msg;
+
+			void append_message(const char* in) {
+				msg = in;
+			}
+
+			friend inline void contract_assert(bool, dp::compat::string, handler_t, violation);
 
 		public:
 
@@ -54,6 +65,10 @@ namespace dp {
 		};
 
 
+
+
+
+		
 		//And our violation exception.
 #ifdef DP_CBUILDER5
 		class violation_exception : public Exception {
@@ -75,70 +90,86 @@ namespace dp {
 			return std::string("Contract violation in function ") + in.function() + ": " + in.message();
 		}
 
-		struct default_handler {
+		void default_enforce(violation viol) {
+			throw violation_exception(default_message(viol));
+		}
 
 
-			void enforce(const dp::contract::violation& viol) {
-				throw violation_exception(default_message(viol));
+		void default_observe(violation viol) {
+			std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
+			out << default_message(viol) << '\n';
+		}
+
+		//Forward dec as we need to be aware of this func.
+		policy get_policy();
+
+		void default_handler(violation viol) {
+			const policy pol = get_policy();
+			if (pol == enforce) {
+				default_enforce(viol);
 			}
-
-			void observe(const dp::contract::violation& viol) {
-				std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
-				out << default_message(viol) << '\n';
-				
+			else if (pol == observe) {
+				default_observe(viol);
 			}
+			//Ignore does nothing.
+		}
+
+		
 
 
-			void ignore(const dp::contract::violation&) {}
-
-		};
-
-
-//Disable certain warnings which are spurious for these functions.
-#ifdef __BORLANDC__
-#pragma option push
-#pragma warn -8008
-#pragma warn -8066
-#elif defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4127)
-#endif
-
-		//And our primary function. We suffer from the lack of C++98's support for default template arguments on template functions
-		template<policy pol, typename handler>
-		void contract_assert(bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
-			if (condition) return;
-			if (pol == policy::enforce) {
-				hand.enforce(viol);
+		//Our currently set handler/policy
+		namespace detail {
+			inline handler_t& handle_impl() {
+				static handler_t handler = default_handler;
+				return handler;
 			}
-			else if (pol == policy::observe) {
-				hand.observe(viol);
-			}
-			else {
-				hand.ignore(viol);
+			inline policy& pol_impl() {
+				static policy pol = enforce ;
+				return pol;
 			}
 		}
 
-		template<typename handler>
-		void contract_assert(policy pol, bool condition, handler hand = dp::contract::default_handler(), dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+		inline handler_t set_handler(handler_t new_handler) {
+			if (new_handler == NULL) throw dp::contract::violation_exception("Attempt to set null handler");
+			handler_t old = detail::handle_impl();
+			detail::handle_impl() = new_handler;
+			return old;
+		}
+
+		inline handler_t get_handler() {
+			return detail::handle_impl();
+		}
+
+		inline policy set_policy(policy new_policy) {
+			policy old = detail::pol_impl();
+			detail::pol_impl() = new_policy;
+			return old;
+		}
+
+		inline policy get_policy() {
+			return detail::pol_impl();
+		}
+
+
+
+
+
+		inline void contract_assert(bool condition, dp::compat::string message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
-			if (pol == policy::enforce) {
-				hand.enforce(viol);
-			}
-			else if (pol == policy::observe) {
-				hand.observe(viol);
-			}
-			else {
-				hand.ignore(viol);
-			}
+			viol.append_message(message.c_str());
+			hand(viol);
 		}
-#ifdef __BORLANDC__
-#pragma option pop
-#elif defined(_MSC_VER)
-#pragma warning(pop)
-#endif
 
+		inline void contract_assert(bool condition, dp::compat::string message, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+			contract_assert(condition, message, get_handler(), viol);
+		}
+
+		inline void contract_assert(bool condition, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+			if (condition) return;
+
+			get_handler()(viol);
+		}
 	}
 
 	using contract::contract_assert;
@@ -150,17 +181,9 @@ namespace dp {
 */
 
 #ifndef DP_NO_CONTRACT_MACROS
-//Hook to define the handler used by the predefined macros.
-#ifndef DP_DEFAULT_HANDLER
-#define DP_DEFAULT_HANDLER dp::contract::default_handler
-#endif
 
-#ifndef DP_DEFAULT_POLICY
-#define DP_DEFAULT_POLICY dp::contract::enforce
-#endif
-
-#define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert<DP_DEFAULT_POLICY>(cond, handler(), dp::contract::violation(DP_SOURCE_LOCATION_THIS_FUNCTION, message))
-#define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, DP_DEFAULT_HANDLER)
+#define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert(cond, message, handler, dp::contract::violation(DP_SOURCE_LOCATION_THIS_FUNCTION, message))
+#define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, dp::contract::get_handler())
 #define CONTRACT_ASSERT1(cond)						CONTRACT_ASSERT2(cond, #cond)
 
 // If we're in C++98 we don't have __VA_ARGS__. However, C++Builder 10 is a strange exception to this rule. Go figure.

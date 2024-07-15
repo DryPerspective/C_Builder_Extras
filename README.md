@@ -10,7 +10,7 @@ To use, add the include directory to your compiler's include path. The tools in 
 A [wiki](https://github.com/DryPerspective/C_Builder_Extras/wiki) is provided with a full writeup of each feature. A short summary of the included features are:
 
 * CI_Traits - A `std::char_traits` class which allows for case-insensitive comparison.
-* Contracts - Function contract assertions to provide more powerful error checking
+* Contracts - Function contract assertions to provide customisable error checking.
 * Convert - A generic type conversion function which converts between built-in, standard library, and VCL types.
 * Defer - A tool to defer the evaluation of certain expressions until the exit of the current scope.
 * Source Location - An emulation of `std::source_location` to track a given location in source code, with caller-based semantics which will work on most modern compilers

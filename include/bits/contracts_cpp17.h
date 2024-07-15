@@ -7,8 +7,8 @@
 
 #include <iostream>
 #include <string_view>
-#include <type_traits>
 #include <fstream>
+#include <atomic>
 
 
 #include "source_location.h"
@@ -27,9 +27,20 @@ namespace dp {
 		constexpr inline auto observe = policy::observe;
 		constexpr inline auto ignore = policy::ignore;
 
+		class violation;
+
+		using handler_t = void(*)(violation);
+
+
 		class violation {
 			dp::source_location loc;
 			std::string_view msg;
+
+			constexpr void append_message(std::string_view in_msg) {
+				msg = in_msg;
+			}
+
+			friend constexpr inline void contract_assert(bool, std::string_view, handler_t, violation);
 
 		public:
 
@@ -51,9 +62,7 @@ namespace dp {
 				return loc.line;
 			}
 
-			constexpr void append_message(std::string_view in_msg) {
-				msg = in_msg;
-			}
+
 		};
 
 		class violation_exception : public std::runtime_error {
@@ -65,101 +74,81 @@ namespace dp {
 			return dp::compat::string{ "Contract violation in function " } + in.function() + ": " + dp::compat::string{ in.message() };
 		}
 
+		[[noreturn]] void default_enforce(violation viol) {
+			throw violation_exception(default_message(viol));
+		}
 
-		/*
-		*	Our "default handler" to determine the default behaviour of our contract violation handling
-		*/
-		struct default_handler {
+		void default_observe(violation viol) {
+			std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
+			out << default_message(viol) << '\n';
+		}
 
+		//Forward dec as we need to be aware of this func.
+		policy get_policy();
 
-			[[noreturn]] inline void enforce(const dp::contract::violation& viol) {
-				throw violation_exception{ default_message(viol)};
+		void default_handler(violation viol) {
+			const policy pol = get_policy();
+			if (pol == enforce) {
+				default_enforce(viol);
 			}
-
-			inline void observe(const dp::contract::violation& viol) {
-				std::ofstream out("Contract violations.log", std::ios_base::out | std::ios_base::app);
-				out << default_message(viol) << '\n';
+			else if (pol == observe) {
+				default_observe(viol);
 			}
-
-			template<typename... Args>
-			constexpr inline void ignore(Args&&...) noexcept {}
-		};
+			//Ignore does nothing.
+		}
 
 
+		//Our currently set handler/policy
+		namespace detail {
+			inline std::atomic<handler_t>& handle_impl() {
+				static std::atomic<handler_t> handler{ default_handler };
+				return handler;
+			}
+			inline std::atomic<policy>& pol_impl() {
+				static std::atomic<policy> pol{ enforce };
+				return pol;
+			}
+		}
+
+		inline handler_t set_handler(handler_t new_handler) {
+			if (new_handler == nullptr) throw dp::contract::violation_exception("Attempt to set null handler");
+			return detail::handle_impl().exchange(new_handler, std::memory_order_acq_rel);
+		}
+
+		inline handler_t get_handler() {
+			return detail::handle_impl().load(std::memory_order_acquire);
+		}
+
+		inline policy set_policy(policy new_policy) {
+			return detail::pol_impl().exchange(new_policy, std::memory_order_acq_rel);
+		}
+
+		inline policy get_policy() {
+			return detail::pol_impl().load(std::memory_order_acquire);
+		}
 
 		/*
 		*  And, our primary assertion function
 		*/
-		template<policy pol = policy::enforce, typename handler = default_handler, typename... Args>
-		constexpr inline  
-		std::enable_if_t<!std::is_constructible_v<std::string_view, handler>, void> //Returns void, but we need to SFINAE to ensure that a message on the other overload doesn't try to resolve as handler
-					contract_assert(bool condition, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }, Args&&... args) {
+		constexpr inline void contract_assert(bool condition, std::string_view message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
-			//If you get an error that this did not evaluate to constant or could not be used in a constant expression, then odds are your assertion failed.
-			if constexpr (pol == policy::enforce) {
-				hand.enforce(viol, std::forward<Args>(args)...);
-			}
-			else if constexpr (pol == policy::observe) {
-				hand.observe(viol, std::forward<Args>(args)...);
-			}
-			else {
-				hand.ignore(viol, std::forward<Args>(args)...);
-			}
-		}
-
-		template<policy pol = policy::enforce, typename handler = default_handler, typename... Args>
-		constexpr inline void contract_assert(bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, ""}, Args&&... args) {
-			
-			if (condition) return;
-
-			//If you get an error that this did not evaluate to constant or could not be used in a constant expression, then odds are your assertion failed.
+			//If you get errors here that it can't be a constant expression, odds are your assertion failed
 			viol.append_message(message);
-			if constexpr (pol == policy::enforce) {
-				hand.enforce(viol, std::forward<Args>(args)...);
-			}
-			else if constexpr (pol == policy::observe) {
-				hand.observe(viol, std::forward<Args>(args)...);
-			}
-			else {
-				hand.ignore(viol, std::forward<Args>(args)...);
-			}
+			hand(viol);
 		}
 
-		template<typename handler = default_handler, typename... Args>
-		constexpr inline 
-			std::enable_if_t<!std::is_constructible_v<std::string_view, handler>, void> //Returns void, but we need to SFINAE to ensure that a message on the other overload doesn't try to resolve as handler			
-				contract_assert(dp::contract::policy pol, bool condition, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }, Args&&... args) {
+		constexpr inline void contract_assert(bool condition, std::string_view message, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+			contract_assert(condition, message, get_handler(), viol);
+		}
+
+		constexpr inline void contract_assert(bool condition, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
-			if (pol == policy::enforce) {
-				hand.enforce(viol, std::forward<Args>(args)...);
-			}
-			else if (pol == policy::observe) {
-				hand.observe(viol, std::forward<Args>(args)...);
-			}
-			else {
-				hand.ignore(viol, std::forward<Args>(args)...);
-			}
+
+			//If you get errors here that it can't be a constant expression, odds are your assertion failed
+			get_handler()(viol);
 		}
-
-		template<typename handler = default_handler, typename... Args>
-		constexpr inline void contract_assert(dp::contract::policy pol, bool condition, std::string_view message, handler hand = default_handler{}, violation viol = violation{ DP_SOURCE_LOCATION_CURRENT, "" }, Args&&... args) {
-			if (condition) return;
-
-			viol.append_message(message);
-
-			if (pol == policy::enforce) {
-				hand.enforce(viol, std::forward<Args>(args)...);
-			}
-			else if (pol == policy::observe) {
-				hand.observe(viol, std::forward<Args>(args)...);
-			}
-			else {
-				hand.ignore(viol, std::forward<Args>(args)...);
-			}
-		}
-
 
 	}
 
@@ -172,18 +161,9 @@ namespace dp {
 
 
 #ifndef DP_NO_CONTRACT_MACROS
-//Hook to define the handler used by the predefined macros.
-#ifndef DP_DEFAULT_HANDLER
-#define DP_DEFAULT_HANDLER dp::contract::default_handler
-#endif
 
-#ifndef DP_DEFAULT_POLICY
-#define DP_DEFAULT_POLICY dp::contract::enforce
-#endif
-
-
-#define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert<DP_DEFAULT_POLICY>(cond, handler{}, dp::contract::violation{DP_SOURCE_LOCATION_THIS_FUNCTION, message})
-#define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, DP_DEFAULT_HANDLER)
+#define CONTRACT_ASSERT3(cond, message, handler)	dp::contract::contract_assert(cond, message, handler, dp::contract::violation(DP_SOURCE_LOCATION_THIS_FUNCTION, message))
+#define CONTRACT_ASSERT2(cond, message)				CONTRACT_ASSERT3(cond, message, dp::contract::get_handler())
 #define CONTRACT_ASSERT1(cond)						CONTRACT_ASSERT2(cond, #cond)
 
 
