@@ -41,7 +41,7 @@ namespace dp {
 				msg = in;
 			}
 
-			friend inline void contract_assert(bool, dp::compat::string, handler_t, violation);
+			friend inline void contract_assert(bool, std::string, handler_t, violation);
 
 		public:
 
@@ -70,14 +70,13 @@ namespace dp {
 
 		
 		//And our violation exception.
-#ifdef DP_CBUILDER5
+#ifdef __BORLANDC__
 		class violation_exception : public Exception {
 		public:
 			violation_exception(const AnsiString& in) : Exception(in) {}
-#ifdef DP_CBUILDER10
-			violation_exception(const UnicodeString& in) : Exception(in) {}
-#endif
-			violation_exception(const std::string& in) : Exception(in.c_str()) {}
+
+
+			//violation_exception(const std::string& in) : Exception(in.c_str()) {}
 		};
 #else
 		class violation_exception : public std::runtime_error {
@@ -91,7 +90,7 @@ namespace dp {
 		}
 
 		void default_enforce(violation viol) {
-			throw violation_exception(default_message(viol));
+			throw violation_exception(default_message(viol).c_str());
 		}
 
 
@@ -154,14 +153,14 @@ namespace dp {
 
 
 
-		inline void contract_assert(bool condition, dp::compat::string message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+		inline void contract_assert(bool condition, std::string message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
 			viol.append_message(message.c_str());
 			hand(viol);
 		}
 
-		inline void contract_assert(bool condition, dp::compat::string message, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
+		inline void contract_assert(bool condition, std::string message, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			contract_assert(condition, message, get_handler(), viol);
 		}
 
