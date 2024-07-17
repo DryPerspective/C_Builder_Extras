@@ -1,6 +1,10 @@
 #ifndef DP_CPP98_CONTRACTS
 #define DP_CPP98_CONTRACTS
 
+/*
+*  Documentation is here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Contracts
+*/
+
 #ifdef DP_CPP17_CONTRACTS
 #error "Detected both C++98 and C++17 contracts in the same TU"
 #endif
