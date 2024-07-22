@@ -16,7 +16,8 @@
 
 #include "bits/borland_version_defs.h"
 #include "bits/tmp_tags.h"
-#include "bits/borland_compat_typedefs.h"
+
+#include "contracts.h"
 
 /*
 *  A general purpose type conversion tool. To allow for easy conversion between common types.
@@ -100,12 +101,9 @@ namespace dp {
 				}
 				T out{};
 				auto result{ std::from_chars(in.data(), in.data() + in.length(), out, base) };
-				if (result.ec == std::errc{}) {
-					return out;
-				}
-				else {
-					throw dp::compat::runtime_error(dp::compat::string{ "Error converting to integer type: " } + (result.ec == std::errc::invalid_argument ? " invalid input" : " out of range"));
-				}
+				CONTRACT_ASSERT(result.ec == std::errc{}, std::string{ "Error converting to integer type: " } + (result.ec == std::errc::invalid_argument ? " invalid input" : " out of range"));
+				return out;
+				
 			}
 			//WIDESTRINGS
 			static inline T get(std::wstring_view in, tag_wide_string) {
@@ -133,8 +131,8 @@ namespace dp {
 						result = std::wcstol(in.data(), &end, base);
 					}
 				}
-				if (result == HUGE_VALF || result == HUGE_VAL || result == HUGE_VALL) throw dp::compat::runtime_error("Error converting to floating point: out of range");
-				else if (result == 0 && end == in.data()) throw dp::compat::runtime_error("Error converting to floating point: invalid input");
+				CONTRACT_ASSERT(result != HUGE_VALF && result != HUGE_VAL && result != HUGE_VALL, "Error converting to integer type: Out of range");
+				CONTRACT_ASSERT(result != 0 || end != in.data(), "Error converting to integer type: Invalid input");
 				return result;
 			}
 		};
@@ -165,12 +163,8 @@ namespace dp {
 				if constexpr (from_chars_exists<T>) {
 					T out;
 					auto result{ std::from_chars(in.data(), in.data() + in.length(), out) };
-					if (result.ec == std::errc{}) {
-						return out;
-					}
-					else {
-						throw dp::compat::runtime_error(dp::compat::string{ "Error converting to floating point: " } + (result.ec == std::errc::invalid_argument ? " invalid input" : " out of range"));
-					}
+					CONTRACT_ASSERT(result.ec == std::errc{}, std::string{ "Error converting to floating point: " } + (result.ec == std::errc::invalid_argument ? " invalid input" : " out of range"));
+					return out;
 				}
 				else {
 					char* end{};
@@ -184,8 +178,8 @@ namespace dp {
 					else {
 						result = strtold(in.data(), &end);
 					}
-					if (result == HUGE_VALF || result == HUGE_VAL || result == HUGE_VALL) throw dp::compat::runtime_error("Error converting to floating point: out of range");
-					else if (result == 0 && end == in.data()) throw dp::compat::runtime_error("Error converting to floating point: invalid input");
+					CONTRACT_ASSERT(result != HUGE_VALF && result != HUGE_VAL && result != HUGE_VALL, "Error converting to floating point: out of range");
+					CONTRACT_ASSERT(result != 0 || end != in.data(), "Error converting to floating point: invalid input");
 					return result;
 				}
 			}
@@ -204,8 +198,8 @@ namespace dp {
 				else {
 					result = std::wcstold(in.data(), &end);
 				}
-				if (result == HUGE_VALF || result == HUGE_VAL || result == HUGE_VALL) throw dp::compat::runtime_error("Error converting to floating point: out of range");
-				else if (result == 0 && end == in.data()) throw dp::compat::runtime_error("Error converting to floating point: invalid input");
+				CONTRACT_ASSERT(result != HUGE_VALF && result != HUGE_VAL && result != HUGE_VALL, "Error converting to floating point: out of range");
+				CONTRACT_ASSERT(result != 0 || end != in.data(), "Error converting to floating point: invalid input");
 				return result;
 			}
 		};
@@ -230,7 +224,7 @@ namespace dp {
 			CHARCONV_CONSTEXPR static inline T get(IntT in, tag_any_int) {
 				std::array<char, std::numeric_limits<IntT>::digits + 1> arr;
 				auto result{ std::to_chars(arr.data(), arr.data() + arr.size(), in) };
-				if (result.ec == std::errc::value_too_large) throw dp::compat::runtime_error("Error converting to std::string: input too large");
+				if (result.ec == std::errc::value_too_large) CONTRACT_ASSERT(false, "Error converting to std::string: input too large");
 				return T(arr.data(), result.ptr - arr.data());
 			}
 			//FLOATING POINT TYPES
@@ -239,7 +233,7 @@ namespace dp {
 				//Premake our buffer
 				std::array<char, std::numeric_limits<FloatT>::max_digits10 + 5> arr;
 				auto result{ std::to_chars(arr.data(), arr.data() + arr.size(), in) };
-				if (result.ec == std::errc::value_too_large) throw dp::compat::runtime_error("Error converting to std::string: input too large");
+				if (result.ec == std::errc::value_too_large) CONTRACT_ASSERT(false, "Error converting to std::string: input too large");
 				return T(arr.data(), result.ptr - arr.data());
 			}
 			//BOOL

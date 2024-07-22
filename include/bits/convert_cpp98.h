@@ -13,6 +13,7 @@
 
 #include "tmp_tags.h"
 #include "support_tools.h"
+#include "contracts.h"
 
 /*
 *	The C++98 equivalent for convert_to
@@ -57,7 +58,7 @@ namespace dp {
 				char* end = NULL;
 				long result = std::strtol(in, &end, 0);
 
-				if (result == LONG_MAX || result == LONG_MIN) throw std::runtime_error("Error converting a C-string to integer type via convert_to");
+				CONTRACT_ASSERT(result != LONG_MAX && result != LONG_MIN, "Error converting a C-string to integer type via convert_to");
 				return static_cast<T>(result);
 			}
 			//STD::STRING
@@ -65,7 +66,7 @@ namespace dp {
 				char* end = NULL;
 				long result = std::strtol(in.c_str(), &end, 0);
 
-				if (result == LONG_MAX || result == LONG_MIN) throw std::runtime_error("Error converting a std::string to integer type via convert_to");
+				CONTRACT_ASSERT(result != LONG_MAX && result != LONG_MIN, "Error converting a std::string to integer type via convert_to");
 				return static_cast<T>(result);
 			}
 		};
@@ -94,7 +95,7 @@ namespace dp {
 				char* end = NULL;
 				unsigned long result = std::strtoul(in, &end, 0);
 
-				if (result == ULONG_MAX) throw std::runtime_error("Error converting a C-string to integer type via convert_to");
+				CONTRACT_ASSERT(result != ULONG_MAX, "Error converting a C-string to integer type via convert_to");
 				return static_cast<T>(result);
 			}
 			//STD::STRING
@@ -102,7 +103,7 @@ namespace dp {
 				char* end = NULL;
 				unsigned long result = std::strtoul(in.c_str(), &end, 0);
 
-				if (result == ULONG_MAX) throw std::runtime_error("Error converting a C-string to integer type via convert_to");
+				CONTRACT_ASSERT(result != ULONG_MAX, "Error converting a std::string to integer type via convert_to");
 				return static_cast<T>(result);
 			}
 		};
@@ -142,14 +143,14 @@ namespace dp {
 				else {
 					result = static_cast<T>(strtold(in, &end));
 				}
-				if (result == HUGE_VAL || result == HUGE_VALF or result == HUGE_VALL || end == in) throw std::runtime_error("Error converting a C-string to floating point via convert_to");
+				CONTRACT_ASSERT(result != HUGE_VAL && result != HUGE_VALF && result != HUGE_VALL && end != in, "Error converting a C-string to floating point via convert_to");
 				return result;
 			}
 			//STD::STRING
 			static inline T get(const std::string& in, instance_of<std::string>) {
 				char* end = NULL;
 				T result = static_cast<T>(strtod(in.c_str(), &end));
-				if (result == HUGE_VAL || result == HUGE_VALF or result == HUGE_VALL || end == in) throw std::runtime_error("Error converting a std::string to floating point via convert_to");
+				CONTRACT_ASSERT(result != HUGE_VAL && result != HUGE_VALF && result != HUGE_VALL && end != in, "Error converting a std::string to floating point via convert_to");
 				return result;
 			}
 		};
