@@ -7,7 +7,6 @@
 *  And it's a shame that we have to use macros, but needs must. 
 */
 
-#include "bits/borland_compat_typedefs.h"
 #include "bits/macros.h"
 
 #if defined(DB_CBUILDER11) || __cplusplus >= 201103L || defined(_MSC_VER)

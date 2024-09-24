@@ -16,7 +16,7 @@
 
 
 #include "source_location.h"
-#include "bits/borland_compat_typedefs.h"
+
 
 namespace dp {
 	namespace contract {
@@ -44,7 +44,7 @@ namespace dp {
 				msg = in_msg;
 			}
 
-			friend constexpr inline void contract_assert(bool, std::string_view, handler_t, violation);
+			friend inline void assert_impl(std::string_view, handler_t, violation);
 
 		public:
 
@@ -68,15 +68,31 @@ namespace dp {
 
 
 		};
-
+#ifdef __BORLANDC__
+		class violation_exception : public Exception {
+		public:
+			violation_exception(std::string_view in) : Exception(in) {};
+		};
+#else
 		class violation_exception : public std::runtime_error {
 		public:
 			violation_exception(const std::string& msg) : std::runtime_error{ msg } {}
 		};
+#endif
 
-		dp::compat::string default_message(const violation& in) {
-			return dp::compat::string{ "Contract violation in function " } + in.function() + ": " + dp::compat::string{ in.message() };
+
+		std::string default_message(const violation& in) {
+			return std::string{ "Contract violation in function " } + in.function() + ": " + std::string{ in.message() };
 		}
+
+#ifdef __BORLANDC__
+		//Because all things Borland want UnicodeString as the base unit for all string processing
+		//And because there's no simple and safe way to convert an existing std::string to UnicodeString
+		//We offer an alternative.
+		UnicodeString default_message_us(const violation& in) {
+			return UnicodeString{ L"Contract violation in function " } + in.function() + L": " + UnicodeString{ in.message() };
+		}
+#endif
 
 		[[noreturn]] void default_enforce(violation viol) {
 			throw violation_exception(default_message(viol));
@@ -131,6 +147,12 @@ namespace dp {
 			return detail::pol_impl().load(std::memory_order_acquire);
 		}
 
+		inline void assert_impl(std::string_view message, handler_t handler, dp::contract::violation viol) {
+
+			if(viol.message() == "") viol.append_message(message);
+			handler(viol);
+		}
+
 		/*
 		*  And, our primary assertion function
 		*/
@@ -138,20 +160,20 @@ namespace dp {
 			if (condition) return;
 
 			//If you get errors here that it can't be a constant expression, odds are your assertion failed
-			viol.append_message(message);
-			hand(viol);
+			assert_impl(message, hand, viol);
 		}
 
 		constexpr inline void contract_assert(bool condition, std::string_view message, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
-			contract_assert(condition, message, get_handler(), viol);
+			
+			if (condition) return;
+
+			assert_impl(message, get_handler(), viol);
 		}
 
 		constexpr inline void contract_assert(bool condition, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
-
-			//If you get errors here that it can't be a constant expression, odds are your assertion failed
-			get_handler()(viol);
+			assert_impl("", get_handler(), viol);
 		}
 
 	}

@@ -13,7 +13,6 @@
 #include <stdexcept>
 #include <string>
 
-#include "bits/borland_compat_typedefs.h"
 #include "source_location.h"
 
 #ifdef __BORLANDC__
