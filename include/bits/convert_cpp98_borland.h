@@ -244,7 +244,15 @@ namespace dp {
 			return convert_to<To>(std::string(in));
 		}
 		template<typename To, typename From>
+		To fun(const From& in, instance_of<const char*>) {
+			return convert_to<To>(std::string(in));
+		}
+		template<typename To, typename From>
 		To fun(const From& in, instance_of<wchar_t*>) {
+			return convert_to<To>(std::wstring(in));
+		}
+		template<typename To, typename From>
+		To fun(const From& in, instance_of<const wchar_t*>) {
 			return convert_to<To>(std::wstring(in));
 		}
 	}
