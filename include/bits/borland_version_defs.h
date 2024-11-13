@@ -12,7 +12,7 @@
 #if __BORLANDC__ >= 0x730
 #define DP_CBUILDER10
 #endif
-#if __BORLANDC__ >= 0x770
+#if __BORLANDC__ >= 0x760
 #define DP_CBUILDER11
 #endif
 #endif
