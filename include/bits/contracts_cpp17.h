@@ -23,13 +23,15 @@ namespace dp {
 		enum class policy {
 			enforce,
 			observe,
-			ignore
+			ignore,
+			quick_enforce
 		};
 
 		//For backwards compatibility and ease of use, we make the names available in this scope
 		constexpr inline auto enforce = policy::enforce;
 		constexpr inline auto observe = policy::observe;
 		constexpr inline auto ignore = policy::ignore;
+		constexpr inline auto quick_enforce = policy::quick_enforce;
 
 		class violation;
 
@@ -108,7 +110,10 @@ namespace dp {
 
 		void default_handler(violation viol) {
 			const policy pol = get_policy();
-			if (pol == enforce) {
+			if (pol == quick_enforce) {
+				std::terminate();
+			}
+			else if (pol == enforce) {
 				default_enforce(viol);
 			}
 			else if (pol == observe) {

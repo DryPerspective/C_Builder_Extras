@@ -26,7 +26,8 @@ namespace dp {
 		enum policy {
 			enforce,
 			observe,
-			ignore
+			ignore,
+			quick_enforce
 		};
 
 		class violation;
@@ -107,7 +108,10 @@ namespace dp {
 
 		void default_handler(violation viol) {
 			const policy pol = get_policy();
-			if (pol == enforce) {
+			if (pol == quick_enforce) {
+				std::terminate();
+			}
+			else if (pol == enforce) {
 				default_enforce(viol);
 			}
 			else if (pol == observe) {
