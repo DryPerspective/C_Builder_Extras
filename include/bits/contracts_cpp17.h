@@ -110,10 +110,7 @@ namespace dp {
 
 		void default_handler(violation viol) {
 			const policy pol = get_policy();
-			if (pol == quick_enforce) {
-				std::terminate();
-			}
-			else if (pol == enforce) {
+			if (pol == enforce) {
 				default_enforce(viol);
 			}
 			else if (pol == observe) {
@@ -164,6 +161,8 @@ namespace dp {
 		constexpr inline void contract_assert(bool condition, std::string_view message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
+			if (get_policy() == quick_enforce) std::terminate();
+
 			//If you get errors here that it can't be a constant expression, odds are your assertion failed
 			assert_impl(message, hand, viol);
 		}
@@ -172,11 +171,15 @@ namespace dp {
 			
 			if (condition) return;
 
+			if (get_policy() == quick_enforce) std::terminate();
+
 			assert_impl(message, get_handler(), viol);
 		}
 
 		constexpr inline void contract_assert(bool condition, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
+
+			if (get_policy() == quick_enforce) std::terminate();
 
 			assert_impl("", get_handler(), viol);
 		}
