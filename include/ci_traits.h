@@ -4,6 +4,8 @@
 /*
 *	The classic example of a case-insensitive traits class for string, string_view, and others.
 *	Has been done before, but I needed one and it's better to have a common impl than reinvent the wheel
+* 
+*   Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/CI_Traits
 */
 
 #include <string>

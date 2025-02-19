@@ -7,6 +7,8 @@
 
 /*
 *  The changes to the mechanics of DEFER are significant between versions. As such we separate the implementations into separate headers.
+* 
+*  Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Defer
 */
 //C++17
 #if defined(DP_CBUILDER11) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L

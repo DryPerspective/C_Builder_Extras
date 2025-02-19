@@ -24,6 +24,8 @@
 *  We do a bit of TMP to get it working. In particular, we use tag dispatch as it lends itself well to being able to
 *  manipulate overload sets on entire families of types in a much more user-friendly way than most ways of manipulating function templates via SFINAE
 *  or endless chains of if-constexpr
+* 
+*  Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Convert
 */
 
 /*

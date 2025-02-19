@@ -13,6 +13,8 @@
 
 #include "bits/macros.h"
 
+//Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Defer
+
 namespace dp {
 
     template<typename Callable, typename... Args>

@@ -5,6 +5,8 @@
 * Because the template mechanics we do with convert_to differs so widely between compiler versions, it is cleaner to separate these implementations
 * Into their own headers rather than have one monster header with multiple preprocessor blocks.
 * This header serves as an "interface", including the right one based on compiler versions and standards
+* 
+* Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Convert
 */
 
 #ifdef __BORLANDC__

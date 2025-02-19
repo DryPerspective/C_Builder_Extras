@@ -24,6 +24,8 @@
 *
 *	As such, we need to do something much uglier and much more unholy in order to get a functional borland tool.
 *	On the plus side, let's us remove a bunch of preprocessor garbage from the the standard C++98 conversion header
+* 
+*   Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Convert
 */
 
 namespace dp {

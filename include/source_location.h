@@ -5,6 +5,8 @@
 *  C++20's std::source_location relies on compiler magic to work; so unfortunately we can't fully emulate it
 *  However, we can kind of sort of emulate it with a bit of macro magic.
 *  And it's a shame that we have to use macros, but needs must. 
+* 
+*  Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Source-Location
 */
 
 #include "bits/macros.h"

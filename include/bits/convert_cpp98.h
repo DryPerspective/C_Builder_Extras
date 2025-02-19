@@ -19,6 +19,8 @@
 *	The C++98 equivalent for convert_to
 *	Note that this does not use any Borland types as the techniques used here, though valid C++98, will not compile on Borland's compiler
 *	A Borland header is provided separately.
+* 
+*  Full documentation here: https://github.com/DryPerspective/C_Builder_Extras/wiki/Convert
 */
 
 
