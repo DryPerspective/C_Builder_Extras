@@ -26,7 +26,8 @@ namespace dp {
 		enum policy {
 			enforce,
 			observe,
-			ignore
+			ignore,
+			quick_enforce
 		};
 
 		class violation;
@@ -159,6 +160,8 @@ namespace dp {
 		inline void contract_assert(bool condition, std::string message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
+			if (get_policy() == quick_enforce) std::terminate();
+
 			viol.append_message(message.c_str());
 			hand(viol);
 		}
@@ -169,6 +172,8 @@ namespace dp {
 
 		inline void contract_assert(bool condition, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
+
+			if (get_policy() == quick_enforce) std::terminate();
 
 			get_handler()(viol);
 		}

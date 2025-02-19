@@ -23,13 +23,15 @@ namespace dp {
 		enum class policy {
 			enforce,
 			observe,
-			ignore
+			ignore,
+			quick_enforce
 		};
 
 		//For backwards compatibility and ease of use, we make the names available in this scope
 		constexpr inline auto enforce = policy::enforce;
 		constexpr inline auto observe = policy::observe;
 		constexpr inline auto ignore = policy::ignore;
+		constexpr inline auto quick_enforce = policy::quick_enforce;
 
 		class violation;
 
@@ -159,6 +161,8 @@ namespace dp {
 		constexpr inline void contract_assert(bool condition, std::string_view message, handler_t hand, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
 
+			if (get_policy() == quick_enforce) std::terminate();
+
 			//If you get errors here that it can't be a constant expression, odds are your assertion failed
 			assert_impl(message, hand, viol);
 		}
@@ -167,11 +171,15 @@ namespace dp {
 			
 			if (condition) return;
 
+			if (get_policy() == quick_enforce) std::terminate();
+
 			assert_impl(message, get_handler(), viol);
 		}
 
 		constexpr inline void contract_assert(bool condition, dp::contract::violation viol = dp::contract::violation(DP_SOURCE_LOCATION_CURRENT, "")) {
 			if (condition) return;
+
+			if (get_policy() == quick_enforce) std::terminate();
 
 			assert_impl("", get_handler(), viol);
 		}
